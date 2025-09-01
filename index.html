@@ -98,15 +98,19 @@ document.addEventListener("DOMContentLoaded", function() {
   const enterBtn = document.getElementById("enter-btn");
   const darkToggle = document.getElementById("dark-toggle");
 
+  // Dark mode toggle
   darkToggle.addEventListener("click", () => {
     document.body.classList.toggle("dark-mode");
     document.body.classList.toggle("light-mode");
   });
 
-  enterBtn.addEventListener("click", () => {
-    introScreen.classList.add("hidden");
-    mainMenu.classList.remove("hidden");
-  });
+  // Enter button
+  if (enterBtn) {
+    enterBtn.addEventListener("click", function() {
+      introScreen.classList.add("hidden");
+      mainMenu.classList.remove("hidden");
+    });
+  }
 
   function showChords(){ mainMenu.classList.add("hidden"); chords.classList.remove("hidden"); }
   function showPractice(){ mainMenu.classList.add("hidden"); practice.classList.remove("hidden"); nextPracticeChord(); }
@@ -122,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function() {
   window.showStrum = showStrum;
   window.goBack = goBack;
 
-  // ALL chords use local images
+  // Chords grid
   const allChords = [
     'c','a','d','g','e','em',
     'am','cmaj7','dm','f','fsharp','fsharpm',
@@ -136,12 +140,11 @@ document.addEventListener("DOMContentLoaded", function() {
     chordGrid.appendChild(card);
   });
 
-  // Practice Chords Randomizer
+  // Practice chords
   const practiceChords = allChords.map(c => c.toUpperCase());
   const practiceDisplay = document.getElementById("practice-chord-display");
   const feedback = document.getElementById("practice-feedback");
   let currentPractice = "";
-
   function nextPracticeChord(){
     currentPractice = practiceChords[Math.floor(Math.random()*practiceChords.length)];
     practiceDisplay.textContent = currentPractice;
@@ -149,7 +152,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
   document.getElementById("next-chord").addEventListener("click", nextPracticeChord);
 
-  // Strum Patterns
+  // Strum songs
   const songs = [
     {name:"Huling El Bimbo", pattern:"DD UUDD DU"},
     {name:"14", pattern:"DD UDUDD DU"},
@@ -157,14 +160,11 @@ document.addEventListener("DOMContentLoaded", function() {
     {name:"Perfect", pattern:"DD UU DU"},
   ];
   let currentSong;
-
   function loadRandomSong(){
     currentSong = songs[Math.floor(Math.random()*songs.length)];
     document.getElementById("song-pattern").textContent = `Song: ${currentSong.name} | Pattern: ${currentSong.pattern}`;
     document.getElementById("strum-feedback").textContent = "";
   }
-
-  // Populate dropdown
   function populateSongSelect(){
     const select = document.getElementById("song-select");
     select.innerHTML = "";
@@ -182,10 +182,7 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     });
   }
-
   document.getElementById("random-song").addEventListener("click", loadRandomSong);
-
-  // Mic test
   document.getElementById("start-mic").addEventListener("click", ()=>{
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
@@ -199,7 +196,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // Chord Recognition Quiz with images + timer
+  // Chord Recognition Quiz
   const quizChords = allChords.map(c => c.toUpperCase());
   let quizIndex = 0;
   let quizScore = 0;
@@ -218,7 +215,6 @@ document.addEventListener("DOMContentLoaded", function() {
   function nextQuizChord(){
     if(quizTimeout) clearTimeout(quizTimeout);
     if(countdownInterval) clearInterval(countdownInterval);
-
     if(quizIndex >= 10){
       document.getElementById("quiz-chord-display").innerHTML = "";
       document.getElementById("quiz-choices").innerHTML = "";
@@ -234,5 +230,47 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     choices.sort(() => Math.random() - 0.5);
 
-    // Show chord image
-    const chordNameLower = correctChord.toLowerCase
+    // Display image + timer
+    const chordNameLower = correctChord.toLowerCase();
+    countdown = 5;
+    const quizDisplay = document.getElementById("quiz-chord-display");
+    quizDisplay.innerHTML = `<p id="quiz-timer">Time: ${countdown}s</p><img src="image/${chordNameLower}.png" alt="${correctChord}" onerror="this.src='image/placeholder.png'">`;
+
+    const choicesDiv = document.getElementById("quiz-choices");
+    choicesDiv.innerHTML = "";
+    choices.forEach(c => {
+      const btn = document.createElement("button");
+      btn.textContent = c;
+      btn.onclick = () => { checkQuizAnswer(c, correctChord); };
+      choicesDiv.appendChild(btn);
+    });
+
+    countdownInterval = setInterval(() => {
+      countdown--;
+      document.getElementById("quiz-timer").textContent = `Time: ${countdown}s`;
+      if(countdown <= 0) clearInterval(countdownInterval);
+    }, 1000);
+
+    quizTimeout = setTimeout(() => {
+      quizIndex++;
+      nextQuizChord();
+    }, 5000);
+  }
+
+  function checkQuizAnswer(selected, correct){
+    if(selected === correct) quizScore++;
+    quizIndex++;
+    nextQuizChord();
+  }
+
+  window.goBackFromQuiz = function(){
+    if(quizTimeout) clearTimeout(quizTimeout);
+    if(countdownInterval) clearInterval(countdownInterval);
+    document.getElementById("chord-quiz").classList.add("hidden");
+    mainMenu.classList.remove("hidden");
+  }
+
+});
+</script>
+</body>
+</html>
