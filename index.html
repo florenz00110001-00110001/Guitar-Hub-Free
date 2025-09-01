@@ -20,6 +20,7 @@ button.back-btn { background:#444; color:white; }
 .dark-mode { background:#111; color:white; }
 .light-mode { background:white; color:black; }
 select { padding:10px; border-radius:8px; font-size:1em; margin:10px; }
+#quiz-chord-display img { width:150px; height:auto; margin-bottom:10px; }
 </style>
 </head>
 <body>
@@ -115,13 +116,12 @@ document.addEventListener("DOMContentLoaded", function() {
     loadRandomSong();
   }
   function goBack(){ chords.classList.add("hidden"); practice.classList.add("hidden"); strum.classList.add("hidden"); mainMenu.classList.remove("hidden"); }
-
   window.showChords = showChords;
   window.showPractice = showPractice;
   window.showStrum = showStrum;
   window.goBack = goBack;
 
-  // ✅ ALL chords now use local images
+  // ALL chords now use local images
   const allChords = [
     'c','a','d','g','e','em',
     'am','cmaj7','dm','f','fsharp','fsharpm',
@@ -182,10 +182,9 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // Random song button
   document.getElementById("random-song").addEventListener("click", loadRandomSong);
 
-  // Mic test placeholder
+  // Mic test
   document.getElementById("start-mic").addEventListener("click", ()=>{
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
@@ -199,10 +198,11 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // ✅ Chord Recognition Quiz
+  // Chord Recognition Quiz with images + timer
   const quizChords = allChords.map(c => c.toUpperCase());
   let quizIndex = 0;
   let quizScore = 0;
+  let quizTimeout;
 
   window.startChordQuiz = function(){
     quizIndex = 0;
@@ -215,8 +215,10 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   function nextQuizChord(){
+    if(quizTimeout) clearTimeout(quizTimeout);
+
     if(quizIndex >= 10){
-      document.getElementById("quiz-chord-display").textContent = "";
+      document.getElementById("quiz-chord-display").innerHTML = "";
       document.getElementById("quiz-choices").innerHTML = "";
       document.getElementById("quiz-score").textContent = `Quiz finished! Your score: ${quizScore}/10`;
       return;
@@ -230,7 +232,11 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     choices.sort(() => Math.random() - 0.5);
 
-    document.getElementById("quiz-chord-display").textContent = `Chord ${quizIndex+1}: Identify this chord`;
+    // Show chord image
+    const chordNameLower = correctChord.toLowerCase();
+    const imgHTML = `<img src="image/${chordNameLower}.png" alt="${correctChord}" onerror="this.src='image/placeholder.png'">`;
+    document.getElementById("quiz-chord-display").innerHTML = imgHTML;
+
     const choicesDiv = document.getElementById("quiz-choices");
     choicesDiv.innerHTML = "";
     choices.forEach(c => {
@@ -240,12 +246,9 @@ document.addEventListener("DOMContentLoaded", function() {
       choicesDiv.appendChild(btn);
     });
 
-    // 5-second auto next
-    setTimeout(() => {
-      if(document.getElementById("quiz-chord-display").textContent.includes(`Chord ${quizIndex+1}`)){
-        quizIndex++;
-        nextQuizChord();
-      }
+    quizTimeout = setTimeout(() => {
+      quizIndex++;
+      nextQuizChord();
     }, 5000);
   }
 
@@ -256,6 +259,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   window.goBackFromQuiz = function(){
+    if(quizTimeout) clearTimeout(quizTimeout);
     document.getElementById("chord-quiz").classList.add("hidden");
     mainMenu.classList.remove("hidden");
   }
