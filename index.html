@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,6 +18,11 @@ button.back-btn { background:#444; }
 #song-search { width:90%; max-width:300px; margin-bottom:10px; }
 iframe { width:100%; height:400px; border:0; margin-top:10px; }
 .learn-lyrics { text-align:left; max-width:600px; margin:0 auto; white-space: pre-wrap; font-family: monospace; }
+@media (max-width:600px){
+  .chord-card{width:70px;}
+  .chord-card img{width:60px;}
+  input,select,button{width:90%; max-width:300px;}
+}
 </style>
 </head>
 <body>
@@ -66,7 +70,6 @@ iframe { width:100%; height:400px; border:0; margin-top:10px; }
 <p id="practice-feedback"></p>
 <button class="back-btn" onclick="goBack()">⬅ Back</button>
 </div>
-
 <!-- Strum Section -->
 <div id="strum" class="hidden">
 <h2>Strum Practice</h2>
@@ -98,7 +101,7 @@ iframe { width:100%; height:400px; border:0; margin-top:10px; }
 </div>
 
 <script>
-// --- Global ---
+// --- Global Variables ---
 let currentUser = null;
 let users = JSON.parse(localStorage.getItem("guitarUsers")) || {};
 const chords = ["C","D","E","F","G","A","B","Am","Dm","Em"];
@@ -111,7 +114,7 @@ const philSongs = [
   {name:"Tagpuan", pattern:"D D U D U", url:"https://www.songsterr.com/a/wa/song/445566", lyrics:`[C]Sa [G]tagpuan [Am]tayo nagkita`}
 ];
 
-// --- Helpers ---
+// --- Helper Functions ---
 function goBack(){
   document.getElementById("chords").classList.add("hidden");
   document.getElementById("practice").classList.add("hidden");
@@ -121,13 +124,13 @@ function goBack(){
   document.getElementById("main-menu").classList.remove("hidden");
 }
 
-// --- Show Password ---
+// Show/Hide Password
 document.getElementById("toggle-pass").onclick = () => {
   let p = document.getElementById("password");
   p.type = p.type === "password" ? "text" : "password";
-}
+};
 
-// --- Intro ---
+// --- Intro / Login ---
 document.getElementById("login-btn").onclick = () => {
   let u = document.getElementById("username").value.trim();
   let p = document.getElementById("password").value.trim();
@@ -143,9 +146,7 @@ document.getElementById("create-acc-btn").onclick = () => {
   users[u] = {password:p, lastScore:0}; localStorage.setItem("guitarUsers", JSON.stringify(users));
   currentUser = u; alert("Created"); showMenu();
 };
-document.getElementById("continue-btn").onclick = () => {
-  currentUser = "Guest"; showMenu();
-};
+document.getElementById("continue-btn").onclick = () => { currentUser="Guest"; showMenu(); };
 function showMenu(){
   document.getElementById("intro-screen").classList.add("hidden");
   document.getElementById("main-menu").classList.remove("hidden");
@@ -154,24 +155,24 @@ function showMenu(){
 // --- Burger Menu ---
 document.getElementById("burger-btn").onclick = () => {
   document.getElementById("main-menu").classList.toggle("hidden");
-}
+};
 
-// --- Chords ---
+// --- Chords View ---
 document.getElementById("view-chords-btn").onclick = () => {
   document.getElementById("main-menu").classList.add("hidden");
   document.getElementById("chords").classList.remove("hidden");
   let g = document.getElementById("chord-grid");
   g.innerHTML = "";
-  chords.forEach(c=>{
+  chords.forEach(c => {
     let d = document.createElement("div");
     d.className = "chord-card";
-    d.innerHTML = `<img src="images/${c}.png" alt="${c}" onerror="this.src='images/placeholder.png'"><br>${c}`;
+    d.innerHTML = `<img src="image/${c.toLowerCase()}.png" alt="${c}" onerror="this.src='image/placeholder.png'"><br>${c}`;
     g.appendChild(d);
   });
 };
 
-// --- Practice ---
-let practiceIndex = 0;
+// --- Practice Chords ---
+let practiceIndex=0;
 document.getElementById("practice-btn").onclick = () => {
   document.getElementById("main-menu").classList.add("hidden");
   document.getElementById("practice").classList.remove("hidden");
@@ -179,42 +180,41 @@ document.getElementById("practice-btn").onclick = () => {
 };
 function nextPractice(){
   practiceIndex = Math.floor(Math.random()*chords.length);
-  document.getElementById("practice-display").innerHTML = `<img src="images/${chords[practiceIndex]}.png" alt="${chords[practiceIndex]}" style="width:100px;height:auto;"><br>${chords[practiceIndex]}`;
-  document.getElementById("practice-feedback").textContent = "";
+  document.getElementById("practice-display").innerHTML =
+    `<img src="image/${chords[practiceIndex].toLowerCase()}.png" alt="${chords[practiceIndex]}" style="width:100px;height:auto;"><br>${chords[practiceIndex]}`;
+  document.getElementById("practice-feedback").textContent="";
 }
 document.getElementById("next-practice").onclick = nextPractice;
 
-// --- Strum ---
+// --- Strum Practice ---
 document.getElementById("strum-btn").onclick = () => {
   document.getElementById("main-menu").classList.add("hidden");
   document.getElementById("strum").classList.remove("hidden");
   populateSongSelect();
-}
+};
 function populateSongSelect(){
-  const s = document.getElementById("song-select");
-  s.innerHTML = "";
+  const s=document.getElementById("song-select"); s.innerHTML="";
   philSongs.forEach((song,i)=>{
-    let o = document.createElement("option");
-    o.value=i; o.textContent = song.name; o.setAttribute("data-pattern", song.pattern);
+    let o=document.createElement("option");
+    o.value=i; o.textContent=song.name; o.setAttribute("data-pattern",song.pattern);
     s.appendChild(o);
   });
   updateSongPattern();
 }
 function updateSongPattern(){
-  let s = document.getElementById("song-select");
+  let s=document.getElementById("song-select");
   let p = philSongs[s.value];
   document.getElementById("song-pattern").textContent = "Pattern: "+p.pattern;
 }
 document.getElementById("random-song").onclick = () => {
   let i = Math.floor(Math.random()*philSongs.length);
-  document.getElementById("song-select").value = i;
+  document.getElementById("song-select").value=i;
   updateSongPattern();
-}
+};
 function filterSongs(){
   let term = document.getElementById("song-search").value.toLowerCase();
-  let s = document.getElementById("song-select");
-  s.innerHTML="";
-  philSongs.filter(song=>song.name.toLowerCase().includes(term)).forEach((song,i)=>{
+  let s = document.getElementById("song-select"); s.innerHTML="";
+  philSongs.filter(song=>song.name.toLowerCase().includes(term)).forEach(song=>{
     let o = document.createElement("option");
     o.value = philSongs.indexOf(song);
     o.textContent = song.name;
@@ -237,7 +237,7 @@ document.getElementById("learn-song-btn").onclick = () => {
 
 // --- Chord Quiz ---
 document.getElementById("chord-quiz-btn").onclick = startQuiz;
-let quizScore = 0, quizQ = 0, totalQ = 5;
+let quizScore=0, quizQ=0, totalQ=5;
 function startQuiz(){
   document.getElementById("main-menu").classList.add("hidden");
   document.getElementById("chord-quiz").classList.remove("hidden");
@@ -247,30 +247,28 @@ function nextQuiz(){
   if(quizQ>=totalQ){
     document.getElementById("quiz-display").textContent="Done! Score: "+quizScore+"/"+totalQ;
     document.getElementById("quiz-choices").innerHTML="";
-    if(currentUser && currentUser!=="Guest"){ users[currentUser].lastScore=quizScore; localStorage.setItem("guitarUsers", JSON.stringify(users)); }
+    if(currentUser && currentUser!=="Guest"){
+      users[currentUser].lastScore=quizScore;
+      localStorage.setItem("guitarUsers", JSON.stringify(users));
+    }
     return;
   }
   let correct = chords[Math.floor(Math.random()*chords.length)];
-  document.getElementById("quiz-display").textContent=correct;
+  document.getElementById("quiz-display").textContent = correct;
   let choices = new Set([correct]);
   while(choices.size<4) choices.add(chords[Math.floor(Math.random()*chords.length)]);
   let shuffled = [...choices].sort(()=>Math.random()-0.5);
-  let container = document.getElementById("quiz-choices");
-  container.innerHTML="";
+  let container = document.getElementById("quiz-choices"); container.innerHTML="";
   shuffled.forEach(c=>{
-    let b = document.createElement("button");
+    let b=document.createElement("button");
     b.textContent=c;
     b.onclick=()=>{
       if(c===correct) quizScore++;
-      quizQ++;
-      nextQuiz();
+      quizQ++; nextQuiz();
     };
     container.appendChild(b);
   });
 }
-
-// --- Preload chord images ---
-chords.forEach(c=>{ let img = new Image(); img.src=`images/${c}.png`; });
 </script>
 </body>
 </html>
