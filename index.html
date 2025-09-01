@@ -1,102 +1,162 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Guitar Hub Trainer</title>
 <style>
-body { font-family: Arial, sans-serif; margin:0; padding:0; background:#111; color:white; text-align:center; transition:0.3s; }
-header { width:100%; background:#000; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; position:fixed; top:0; left:0; z-index:1000; }
-.logo { display:flex; align-items:center; font-weight:bold; font-size:1.6em; }
-.logo span.guitar { color:white; }
-.logo span.hub { color:black; background:yellow; padding:4px 8px; border-radius:5px; margin-left:5px; }
-main { padding-top:80px; }
-button { padding:12px 20px; margin:8px; background:orange; border:none; border-radius:8px; font-size:1em; cursor:pointer; }
-button.back-btn { background:#444; color:white; }
-.hidden { display:none; }
-.chord-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:15px; padding:20px; }
-.chord-card { background:#222; padding:10px; border-radius:10px; box-shadow:0 0 10px #000; width:120px; color:white; }
-.chord-card img { width:100px; height:auto; }
-.dark-mode, .dark-mode * { background:#111 !important; color:white !important; }
-.light-mode { background:white; color:black; }
-select, input { padding:10px; border-radius:8px; font-size:1em; margin:10px; }
-#quiz-chord-display img { width:150px; height:auto; margin-bottom:10px; }
-#quiz-timer { font-weight:bold; margin-bottom:10px; font-size:1.2em; }
-#dashboard-btn { font-size:1.5em; cursor:pointer; background:none; border:none; color:white; }
-table { margin:0 auto; border-collapse: collapse; color:white; }
-table th, table td { padding:8px 12px; border:1px solid #fff; }
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #111;
+  color: white;
+  text-align: center;
+  transition: 0.3s;
+}
+header {
+  width: 100%;
+  background: #000;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.6em;
+}
+.logo span.guitar { color: white; }
+.logo span.hub {
+  color: black;
+  background: yellow;
+  padding: 4px 8px;
+  border-radius: 5px;
+  margin-left: 5px;
+}
+main { padding-top: 100px; }
+button {
+  padding: 12px 20px;
+  margin: 8px;
+  background: orange;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  cursor: pointer;
+}
+button.back-btn { background: #444; color: white; }
+.hidden { display: none; }
+input { padding: 10px; border-radius: 8px; font-size: 1em; margin: 5px; width: 200px; }
+.dark-mode, .dark-mode * { background: #111 !important; color: white !important; }
+.light-mode { background: white; color: black; }
+.chord-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding: 20px; }
+.chord-card { background: #222; padding: 10px; border-radius: 10px; box-shadow: 0 0 10px #000; width: 120px; color: white; }
+.chord-card img { width: 100px; height: auto; }
+#quiz-chord-display img { width: 150px; height: auto; margin-bottom: 10px; }
+#quiz-timer { font-weight: bold; margin-bottom: 10px; font-size: 1.2em; }
+table { margin: 0 auto; border-collapse: collapse; color: white; }
+table th, table td { padding: 8px 12px; border: 1px solid #fff; }
 </style>
 </head>
-<body><header>
+<body>
+<header>
   <div class="logo"><span class="guitar">Guitar</span><span class="hub">Hub</span></div>
-  <button id="dashboard-btn">&#9776;</button>
   <button id="dark-toggle">Toggle Dark Mode</button>
-</header><main>
-<!-- Intro -->
-<div id="intro-screen">
-  <h1>Welcome to Guitar Trainer</h1>
-  <button id="sign-in-btn">Sign In</button>
-  <button id="create-acc-btn">Create Account</button>
-  <button id="continue-btn">Continue Without Account</button>
-</div><!-- Main Menu --><div id="main-menu" class="hidden">
-  <h2>Main Menu</h2>
-  <button onclick="showChords()">View Chords</button>
-  <button onclick="showPractice()">Practice Chords</button>
-  <button onclick="showStrum()">Practice Strum</button>
-  <button onclick="startChordQuiz()">Chord Recognition Practice</button>
-  <button onclick="showAccount()">Account Center</button>
-  <button onclick="window.open('https://www.guitartuna.com/', '_blank')">Tune in using GuitarTuna!</button>
-</div><!-- Chords --><div id="chords" class="hidden">
-  <h2>Basic Chords</h2>
-  <div class="chord-grid" id="chord-grid"></div>
-  <button class="back-btn" onclick="goBack()">⬅ Back</button>
-</div><!-- Practice Chords --><div id="practice" class="hidden">
-  <h2>Practice Chords (Random)</h2>
-  <div id="practice-chord-display" style="font-size:2em; margin:20px;"></div>
-  <button id="next-chord">Next Chord</button>
-  <p id="practice-feedback"></p>
-  <button class="back-btn" onclick="goBack()">⬅ Back</button>
-</div><!-- Strum --><div id="strum" class="hidden">
-  <h2>Practice Strum</h2>
-  <div>
-    <label for="song-select">Choose Song:</label>
-    <select id="song-select"></select>
-    <p id="song-pattern">Pattern: </p>
-    <button id="random-song">Random Song</button>
-    <button id="start-mic">Start Mic Test</button>
-    <p id="strum-feedback"></p>
+</header>
+<main>
+  <!-- Intro Screen with Username & Password -->
+  <div id="intro-screen">
+    <h1>Welcome to Guitar Trainer</h1>
+    <input type="text" id="username" placeholder="Username"><br>
+    <input type="password" id="password" placeholder="Password"><br>
+    <a href="#" id="forgot-password" style="color:lightblue; font-size:0.9em;">Forgot password?</a><br>
+    <button id="login-btn">Log In</button><br>
+    <button id="create-acc-btn">Create Account</button>
+    <button id="continue-btn">Continue Without Account</button>
   </div>
-  <button class="back-btn" onclick="goBack()">⬅ Back</button>
-</div><!-- Account Center --><div id="account" class="hidden">
-  <h2>Account Center</h2>
-  <div id="login-section">
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button id="login-btn">Login / Create Account</button>
-    <p id="login-msg"></p>
+
+  <!-- Main Menu -->
+  <div id="main-menu" class="hidden">
+    <h2>Main Menu</h2>
+    <button onclick="showChords()">View Chords</button>
+    <button onclick="showPractice()">Practice Chords</button>
+    <button onclick="showStrum()">Practice Strum</button>
+    <button onclick="startChordQuiz()">Chord Recognition Practice</button>
+    <button onclick="showAccount()">Account Center</button>
+    <button onclick="window.open('https://www.guitartuna.com/', '_blank')">Tune in using GuitarTuna!</button>
   </div>
-  <div id="profile-section" class="hidden">
-    <p id="welcome-msg"></p>
-    <p>Last Quiz Score: <span id="last-score">0</span></p>
-    <button onclick="logout()">Logout</button>
+
+  <!-- Chords Section -->
+  <div id="chords" class="hidden">
+    <h2>Basic Chords</h2>
+    <div class="chord-grid" id="chord-grid"></div>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
-  <button class="back-btn" onclick="backFromAccount()">⬅ Back</button>
-</div><!-- Chord Quiz --><div id="chord-quiz" class="hidden">
-  <h2>Chord Recognition Practice</h2>
-  <div id="quiz-timer">Time: <span id="time-left">5</span>s</div>
-  <div id="quiz-chord-display"></div>
-  <div id="quiz-choices" class="chord-grid"></div>
-  <div id="quiz-score" style="margin-top:20px; font-weight:bold;"></div>
-  <button class="back-btn" onclick="goBackFromQuiz()">⬅ Back</button>
-</div><!-- Dashboard --><div id="dashboard" class="hidden">
-  <h2>In-Web Account Dashboard</h2>
-  <table>
-    <thead>
-      <tr><th>Username</th><th>Last Quiz Score</th><th>Action</th></tr>
-    </thead>
-    <tbody id="dashboard-body"></tbody>
-  </table>
-  <button onclick="refreshDashboard()">Refresh</button>
-  <button onclick="clearAllAccounts()">Clear All Accounts</button>
-  <button class="back-btn" onclick="backFromDashboard()">⬅ Back</button>
-</div></main><script src="script.js" type="module"></script></body>
+
+  <!-- Practice Chords -->
+  <div id="practice" class="hidden">
+    <h2>Practice Chords (Random)</h2>
+    <div id="practice-chord-display" style="font-size:2em; margin:20px;"></div>
+    <button id="next-chord">Next Chord</button>
+    <p id="practice-feedback"></p>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
+
+  <!-- Strum Section -->
+  <div id="strum" class="hidden">
+    <h2>Practice Strum</h2>
+    <div>
+      <label for="song-select">Choose Song:</label>
+      <select id="song-select"></select>
+      <p id="song-pattern">Pattern: </p>
+      <button id="random-song">Random Song</button>
+      <button id="start-mic">Start Mic Test</button>
+      <p id="strum-feedback"></p>
+    </div>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
+
+  <!-- Account Center -->
+  <div id="account" class="hidden">
+    <h2>Account Center</h2>
+    <div id="profile-section" class="hidden">
+      <p id="welcome-msg"></p>
+      <p>Last Quiz Score: <span id="last-score">0</span></p>
+      <button onclick="logout()">Logout</button>
+    </div>
+    <button class="back-btn" onclick="backFromAccount()">⬅ Back</button>
+  </div>
+
+  <!-- Chord Quiz -->
+  <div id="chord-quiz" class="hidden">
+    <h2>Chord Recognition Practice</h2>
+    <div id="quiz-timer">Time: <span id="time-left">5</span>s</div>
+    <div id="quiz-chord-display"></div>
+    <div id="quiz-choices" class="chord-grid"></div>
+    <div id="quiz-score" style="margin-top:20px; font-weight:bold;"></div>
+    <button class="back-btn" onclick="goBackFromQuiz()">⬅ Back</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden">
+    <h2>In-Web Account Dashboard</h2>
+    <table>
+      <thead>
+        <tr><th>Username</th><th>Last Quiz Score</th><th>Action</th></tr>
+      </thead>
+      <tbody id="dashboard-body"></tbody>
+    </table>
+    <button onclick="refreshDashboard()">Refresh</button>
+    <button onclick="clearAllAccounts()">Clear All Accounts</button>
+    <button class="back-btn" onclick="backFromDashboard()">⬅ Back</button>
+  </div>
+</main>
+<script type="module" src="script.js"></script>
+</body>
 </html>
