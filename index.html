@@ -5,191 +5,144 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Guitar Hub Trainer</title>
 <style>
-body { font-family: Arial, Helvetica, sans-serif; background:#111; color:white; text-align:center; margin:0; padding:0;}
-header { width:100%; background:#000; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; position:fixed; top:0; left:0; z-index:1000;}
-.logo { display:flex; align-items:center; font-weight:bold; font-size:1.6em;}
+body { font-family: Arial, sans-serif; margin:0; padding:0; background:#111; color:white; text-align:center; transition:0.3s; }
+header { width:100%; background:#000; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; position:fixed; top:0; left:0; z-index:1000; }
+.logo { display:flex; align-items:center; font-weight:bold; font-size:1.6em; }
 .logo span.guitar { color:white; }
 .logo span.hub { color:black; background:yellow; padding:4px 8px; border-radius:5px; margin-left:5px; }
 main { padding-top:80px; }
 button { padding:12px 20px; margin:8px; background:orange; border:none; border-radius:8px; font-size:1em; cursor:pointer; }
+button.back-btn { background:#444; color:white; }
 .hidden { display:none; }
 .chord-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:15px; padding:20px; }
-.chord-card { background:#222; padding:10px; border-radius:10px; width:100px; text-align:center; }
-.chord-img { width:80px; margin-top:5px; }
-#pattern-display, #chord-mistakes, #strum-status, #strum-mistakes { margin-top:15px; }
-audio { margin-top:15px; width:80%; }
-.light-mode { background:#eee; color:#111; }
-.light-mode .chord-card { background:#ccc; color:#111; }
+.chord-card { background:#222; padding:10px; border-radius:10px; box-shadow:0 0 10px #000; width:120px; }
+.chord-card img { width:100px; }
+.dark-mode { background:#111; color:white; }
+.light-mode { background:white; color:black; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <span class="guitar">Guitar</span>
-    <span class="hub">Hub</span>
-  </div>
-  <button id="mode-toggle">Toggle Dark/Light</button>
+  <div class="logo"><span class="guitar">Guitar</span><span class="hub">Hub</span></div>
+  <button id="dark-toggle">Toggle Dark Mode</button>
 </header>
 
 <main>
-<div id="main-menu">
-  <h2>Main Menu</h2>
-  <button onclick="showViewChords()">View Chords</button>
-  <button onclick="showPracticeChords()">Practice Chords</button>
-  <button onclick="showStrum()">Practice Strum</button>
-  <button onclick="openGuitarTuna()">🎸 Tune in using GuitarTuna!</button>
-</div>
+  <!-- Intro -->
+  <div id="intro-screen">
+    <h1>Welcome to Guitar Trainer</h1>
+    <button id="enter-btn">Enter</button>
+  </div>
 
-<!-- View Chords -->
-<div id="view-chords" class="hidden">
-  <h2>All Chords</h2>
-  <div id="chord-grid-view" class="chord-grid"></div>
-  <button onclick="goBack()">⬅ Back</button>
-</div>
+  <!-- Main Menu -->
+  <div id="main-menu" class="hidden">
+    <h2>Main Menu</h2>
+    <button onclick="showChords()">View Chords</button>
+    <button onclick="showPractice()">Practice Chords</button>
+    <button onclick="showStrum()">Practice Strum</button>
+    <button onclick="window.open('https://www.guitartuna.com/', '_blank')">Tune in using GuitarTuna!</button>
+  </div>
 
-<!-- Chord Practice -->
-<div id="practice-chords" class="hidden">
-  <h2>Practice Chords</h2>
-  <div id="current-chord" style="font-size:2em; margin:20px;"></div>
-  <button id="start-chord-rec">Start Listening</button>
-  <p id="chord-mistakes">You have (0) mistakes wrong</p>
-  <button onclick="restartChords()">Restart</button>
-  <button onclick="goBack()">⬅ Back</button>
-</div>
+  <!-- Chords -->
+  <div id="chords" class="hidden">
+    <h2>Basic Chords</h2>
+    <div class="chord-grid" id="chord-grid">
+      <!-- Chords loaded by JS -->
+    </div>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
 
-<!-- Strum Practice -->
-<div id="strum" class="hidden">
-  <h2>Strumming Practice</h2>
-  <select id="song-select"></select>
-  <button id="start-strum-rec">Start Recording</button>
-  <div id="pattern-display"></div>
-  <p id="strum-status">Record your strum</p>
-  <p id="strum-mistakes">You have (0) mistakes wrong</p>
-  <audio id="audio-playback" controls class="hidden"></audio>
-  <button onclick="restartStrum()">Restart</button>
-  <button onclick="goBack()">⬅ Back</button>
-</div>
+  <!-- Practice Chords -->
+  <div id="practice" class="hidden">
+    <h2>Practice Chords (Random)</h2>
+    <div id="practice-chord-display" style="font-size:2em; margin:20px;"></div>
+    <button id="next-chord">Next Chord</button>
+    <p id="practice-feedback"></p>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
 
+  <!-- Strum -->
+  <div id="strum" class="hidden">
+    <h2>Practice Strum</h2>
+    <div>
+      <p id="song-pattern">Pattern: </p>
+      <button id="start-mic">Start Mic Test</button>
+      <p id="strum-feedback"></p>
+    </div>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
 </main>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  // Dark/Light toggle
-  document.getElementById('mode-toggle').addEventListener('click', ()=>{
-    document.body.classList.toggle('light-mode');
-  });
+// Elements
+const introScreen = document.getElementById("intro-screen");
+const mainMenu = document.getElementById("main-menu");
+const chords = document.getElementById("chords");
+const practice = document.getElementById("practice");
+const strum = document.getElementById("strum");
+const enterBtn = document.getElementById("enter-btn");
+const darkToggle = document.getElementById("dark-toggle");
 
-  const mainMenu = document.getElementById('main-menu');
-  const viewChordsDiv = document.getElementById('view-chords');
-  const practiceChordsDiv = document.getElementById('practice-chords');
-  const strumDiv = document.getElementById('strum');
-
-  window.showViewChords = () => { mainMenu.classList.add('hidden'); viewChordsDiv.classList.remove('hidden'); }
-  window.showPracticeChords = () => { mainMenu.classList.add('hidden'); practiceChordsDiv.classList.remove('hidden'); }
-  window.showStrum = () => { mainMenu.classList.add('hidden'); strumDiv.classList.remove('hidden'); }
-  window.goBack = () => { 
-    viewChordsDiv.classList.add('hidden'); 
-    practiceChordsDiv.classList.add('hidden'); 
-    strumDiv.classList.add('hidden'); 
-    mainMenu.classList.remove('hidden'); 
+// Dark mode toggle
+darkToggle.addEventListener("click", () => {
+  if(document.body.classList.contains("dark-mode")){
+    document.body.classList.remove("dark-mode");
+    document.body.classList.add("light-mode");
+  } else {
+    document.body.classList.remove("light-mode");
+    document.body.classList.add("dark-mode");
   }
+});
 
-  window.openGuitarTuna = () => { window.open("https://www.guitartuna.com/", "_blank"); }
+// Menu navigation
+enterBtn.addEventListener("click", () => { introScreen.classList.add("hidden"); mainMenu.classList.remove("hidden"); });
+function showChords(){ mainMenu.classList.add("hidden"); chords.classList.remove("hidden"); }
+function showPractice(){ mainMenu.classList.add("hidden"); practice.classList.remove("hidden"); nextPracticeChord(); }
+function showStrum(){ mainMenu.classList.add("hidden"); strum.classList.remove("hidden"); loadRandomSong(); }
+function goBack(){ chords.classList.add("hidden"); practice.classList.add("hidden"); strum.classList.add("hidden"); mainMenu.classList.remove("hidden"); }
 
-  // ----- Chord images array -----
-  const images = [
-    "c.png","a.png","d.png","g.png","e.png","em.png","am.png",
-    "cmaj7.png","dm.png","f.png","fsharp.png","fsharpm.png",
-    "b.png","bb.png","bm.png","csharpm.png","gsharpm.png"
-  ];
+// Chords display
+const chordNames = ['c','a','d','g','e','em','am','cmaj7','dm','f','f#','f#m','b','bb','bm','c#m','g#m'];
+const chordGrid = document.getElementById("chord-grid");
+chordNames.forEach(chord=>{
+  const card = document.createElement("div");
+  card.classList.add("chord-card");
+  card.innerHTML = `<img src="image/${chord}.png" alt="${chord} chord"><p>${chord.toUpperCase()}</p>`;
+  chordGrid.appendChild(card);
+});
 
-  // View Chords
-  const chordGridView = document.getElementById("chord-grid-view");
-  images.forEach(filename => {
-    const chordName = filename.split('.')[0];
-    const card = document.createElement("div");
-    card.classList.add("chord-card");
-    card.innerHTML = `<img src="images/${filename}" class="chord-img" alt="${chordName}"><p>${chordName}</p>`;
-    chordGridView.appendChild(card);
-  });
+// Practice Chords Randomizer
+const practiceChords = ['C','A','D','G','E','Em','Am','Cmaj7','Dm','F','F#','F#m','B','Bb','Bm','C#m','G#m'];
+const practiceDisplay = document.getElementById("practice-chord-display");
+const feedback = document.getElementById("practice-feedback");
+let currentPractice = "";
 
-  // ----- Chord Practice -----
-  const chordSequence = ["C","G","Am","F"];
-  let currentIndex = 0, mistakes = 0;
-  const currentChordDiv = document.getElementById("current-chord");
-  const chordMistakes = document.getElementById("chord-mistakes");
+function nextPracticeChord(){
+  currentPractice = practiceChords[Math.floor(Math.random()*practiceChords.length)];
+  practiceDisplay.textContent = currentPractice;
+  feedback.textContent = "";
+}
+document.getElementById("next-chord").addEventListener("click", nextPracticeChord);
 
-  function showCurrentChord() { currentChordDiv.textContent = chordSequence[currentIndex]; }
-  window.restartChords = () => { currentIndex=0; mistakes=0; chordMistakes.textContent=`You have (${mistakes}) mistakes wrong`; showCurrentChord(); }
-  showCurrentChord();
+// Strum Patterns
+const songs = [
+  {name:"Huling El Bimbo", pattern:"DD UUDD DU"},
+  {name:"14", pattern:"DD UDUDD DU"},
+  {name:"Kahit Maputi Na Ang Buhok Ko", pattern:"DUD DUD"},
+  {name:"Perfect", pattern:"DD UU DU"},
+];
+let currentSong;
 
-  document.getElementById("start-chord-rec").addEventListener('click', async ()=>{
-    try{
-      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-      const mediaRecorder = new MediaRecorder(stream);
-      let audioChunks = [];
-      mediaRecorder.start();
-      chordMistakes.textContent='Listening...';
-      mediaRecorder.ondataavailable = e=>audioChunks.push(e.data);
-      mediaRecorder.onstop = ()=>{
-        if(Math.random()<0.7){ currentIndex=(currentIndex+1)%chordSequence.length; } 
-        else { mistakes++; }
-        chordMistakes.textContent=`You have (${mistakes}) mistakes wrong`;
-        showCurrentChord();
-      }
-      setTimeout(()=>mediaRecorder.stop(),4000);
-    } catch(err){
-      chordMistakes.textContent='Mic access denied!';
-      console.error(err);
-    }
-  });
+function loadRandomSong(){
+  currentSong = songs[Math.floor(Math.random()*songs.length)];
+  document.getElementById("song-pattern").textContent = `Song: ${currentSong.name} | Pattern: ${currentSong.pattern}`;
+  document.getElementById("strum-feedback").textContent = "";
+}
 
-  // ----- Strum Practice -----
-  const songs = {
-    'Huling El Bimbo': 'DD UUDD DU',
-    '14': 'DD UDUDD DU',
-    'Tadhana': 'DDU UDU',
-    'Ikaw': 'D D U D U',
-    'Narda': 'D DU D DU'
-  };
-  const songSelect = document.getElementById('song-select');
-  for(const song in songs){
-    const opt = document.createElement('option'); opt.value=song; opt.textContent=song;
-    songSelect.appendChild(opt);
-  }
-  const patternDisplay = document.getElementById('pattern-display');
-  songSelect.addEventListener('change', ()=>{ patternDisplay.textContent=songs[songSelect.value]; });
-  patternDisplay.textContent = songs[songSelect.value];
-
-  let mediaRecorderStrum;
-  let audioChunksStrum = [];
-  const audioPlayback = document.getElementById('audio-playback');
-  const strumStatus = document.getElementById('strum-status');
-
-  document.getElementById('start-strum-rec').addEventListener('click', async ()=>{
-    try{
-      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-      audioChunksStrum = [];
-      mediaRecorderStrum = new MediaRecorder(stream);
-      mediaRecorderStrum.start();
-      strumStatus.textContent='Recording...';
-      mediaRecorderStrum.ondataavailable = e=>audioChunksStrum.push(e.data);
-      mediaRecorderStrum.onstop = ()=>{
-        const audioBlob = new Blob(audioChunksStrum,{type:'audio/wav'});
-        audioPlayback.src = URL.createObjectURL(audioBlob);
-        audioPlayback.classList.remove('hidden');
-        strumStatus.textContent='Recording Complete!';
-      }
-      setTimeout(()=>mediaRecorderStrum.stop(),5000);
-    } catch(err){
-      strumStatus.textContent='Mic access denied!';
-      console.error(err);
-    }
-  });
-
-  window.restartStrum = () => { audioPlayback.classList.add('hidden'); audioPlayback.src=''; strumStatus.textContent='Record your strum'; }
-
+// Mic test (placeholder)
+document.getElementById("start-mic").addEventListener("click",()=>{
+  alert("Mic test placeholder! Recording is not implemented in this demo.");
 });
 </script>
 
