@@ -102,18 +102,37 @@ function showPractice(){ mainMenu.classList.add("hidden"); practice.classList.re
 function showStrum(){ mainMenu.classList.add("hidden"); strum.classList.remove("hidden"); loadRandomSong(); }
 function goBack(){ chords.classList.add("hidden"); practice.classList.add("hidden"); strum.classList.add("hidden"); mainMenu.classList.remove("hidden"); }
 
-// Chords display
-const chordNames = ['c','a','d','g','e','em','am','cmaj7','dm','f','f#','f#m','b','bb','bm','c#m','g#m'];
+// Chords display with URLs
+const chordData = [
+  {name:'C', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/C-Major.png'},
+  {name:'A', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/A-Major.png'},
+  {name:'D', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/D-Major.png'},
+  {name:'G', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/G-Major.png'},
+  {name:'E', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/E-Major.png'},
+  {name:'Em', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/E-Minor.png'},
+  {name:'Am', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/A-Minor.png'},
+  {name:'Cmaj7', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/Cmaj7.png'},
+  {name:'Dm', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/D-Minor.png'},
+  {name:'F', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/F-Major.png'},
+  {name:'F#', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/F-Sharp-Major.png'},
+  {name:'F#m', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/F-Sharp-Minor.png'},
+  {name:'B', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/B-Major.png'},
+  {name:'Bb', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/B-Flat-Major.png'},
+  {name:'Bm', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/B-Minor.png'},
+  {name:'C#m', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/C-Sharp-Minor.png'},
+  {name:'G#m', url:'https://www.guitar-chord.org/wp-content/uploads/2012/11/G-Sharp-Minor.png'}
+];
+
 const chordGrid = document.getElementById("chord-grid");
-chordNames.forEach(chord=>{
+chordData.forEach(chord=>{
   const card = document.createElement("div");
   card.classList.add("chord-card");
-  card.innerHTML = `<img src="image/${chord}.png" alt="${chord} chord"><p>${chord.toUpperCase()}</p>`;
+  card.innerHTML = `<img src="${chord.url}" alt="${chord.name} chord"><p>${chord.name}</p>`;
   chordGrid.appendChild(card);
 });
 
 // Practice Chords Randomizer
-const practiceChords = ['C','A','D','G','E','Em','Am','Cmaj7','Dm','F','F#','F#m','B','Bb','Bm','C#m','G#m'];
+const practiceChords = chordData.map(c=>c.name);
 const practiceDisplay = document.getElementById("practice-chord-display");
 const feedback = document.getElementById("practice-feedback");
 let currentPractice = "";
@@ -142,9 +161,4 @@ function loadRandomSong(){
 
 // Mic test (placeholder)
 document.getElementById("start-mic").addEventListener("click",()=>{
-  alert("Mic test placeholder! Recording is not implemented in this demo.");
-});
-</script>
-
-</body>
-</html>
+  alert("
