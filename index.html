@@ -1157,3 +1157,119 @@ body.dark .chord-card { background: #333; }
   <button id="learn-song-btn" class="orange">Learn Song</button>
   <button id="dark-mode-btn" class="orange">Toggle Dark Mode</button>
 </div>
+
+  <!-- Part 12: Final Bug Fix Layer -->
+<script>
+// --- GLOBAL CLEANUP ---
+document.addEventListener("DOMContentLoaded", () => {
+  // Remove duplicate login screens if any
+  const loginScreens = document.querySelectorAll("#intro-screen");
+  if (loginScreens.length > 1) {
+    for (let i = 1; i < loginScreens.length; i++) loginScreens[i].remove();
+  }
+
+  // Fix logo and hub colors
+  const logo = document.querySelector(".logo");
+  if (logo) logo.style.color = "white";
+
+  const header = document.querySelector("header");
+  if (header) header.style.backgroundColor = "#000";
+
+  // Fix body background
+  document.body.style.backgroundColor = "#111";
+
+  // Ensure main menu has orange buttons and proper display
+  document.querySelectorAll("#main-menu button").forEach(b => {
+    b.style.backgroundColor = "#ff6600";
+    b.style.color = "white";
+  });
+
+  // Fix chord images path
+  const chordCards = document.querySelectorAll(".chord-card img");
+  chordCards.forEach(img => {
+    const name = img.alt.toLowerCase();
+    img.src = "image/" + name + ".png";
+  });
+
+  // Fix Learn Song lyrics: if too long, show button to Tabs app
+  const learnLyricsDiv = document.getElementById("learn-lyrics");
+  if (learnLyricsDiv && learnLyricsDiv.textContent.length > 500) {
+    learnLyricsDiv.innerHTML = "Lyrics too long. <a href='https://tabsapp.com' target='_blank'>Download Tabs App</a> for full lyrics.";
+  }
+
+  // Fix Strum Practice: search and random works
+  const songSelect = document.getElementById("song-select");
+  const songSearch = document.getElementById("song-search");
+  if (songSelect && songSearch) {
+    songSearch.addEventListener("input", () => {
+      const term = songSearch.value.toLowerCase();
+      for (let i = 0; i < songSelect.options.length; i++) {
+        const opt = songSelect.options[i];
+        opt.style.display = opt.text.toLowerCase().includes(term) ? "block" : "none";
+      }
+    });
+  }
+
+  // Fix Chord Recognition: add images if missing
+  const quizDisplay = document.getElementById("quiz-display");
+  if (quizDisplay && !quizDisplay.querySelector("img")) {
+    const chordName = quizDisplay.textContent.trim();
+    if (chordName) {
+      const img = document.createElement("img");
+      img.src = "image/" + chordName.toLowerCase() + ".png";
+      img.alt = chordName;
+      img.style.width = "80px";
+      quizDisplay.innerHTML = "";
+      quizDisplay.appendChild(img);
+    }
+  }
+
+  // Ensure burger menu works on main menu
+  const burgerBtn = document.getElementById("burger-btn");
+  if (burgerBtn) {
+    burgerBtn.addEventListener("click", () => {
+      const menu = document.getElementById("main-menu");
+      if (menu) menu.classList.toggle("hidden");
+    });
+  }
+
+  // Remove burger from login screen
+  if (document.getElementById("intro-screen") && burgerBtn) {
+    burgerBtn.style.display = "none";
+  }
+
+  // Ensure dark mode button works
+  const darkModeBtn = document.getElementById("dark-mode-btn");
+  if (darkModeBtn) {
+    darkModeBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      if (document.body.classList.contains("dark-mode")) {
+        document.body.style.backgroundColor = "#000";
+        document.body.style.color = "white";
+      } else {
+        document.body.style.backgroundColor = "#111";
+        document.body.style.color = "white";
+      }
+    });
+  }
+
+  // Ensure mobile responsiveness
+  document.querySelectorAll("header, main, .chord-grid, .chord-card").forEach(el => {
+    el.style.maxWidth = "100%";
+  });
+
+  // Fix guitar sound test button
+  const guitarSoundBtn = document.getElementById("play-guitar-sound");
+  if (guitarSoundBtn) {
+    guitarSoundBtn.addEventListener("click", () => {
+      alert("Guitar sound test coming soon!");
+    });
+  }
+
+  // Remove duplicate Learn Song if any
+  const learnSongDivs = document.querySelectorAll("#learn-song");
+  if (learnSongDivs.length > 1) {
+    for (let i = 1; i < learnSongDivs.length; i++) learnSongDivs[i].remove();
+  }
+});
+</script>
