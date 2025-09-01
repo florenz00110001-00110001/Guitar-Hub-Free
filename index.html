@@ -75,85 +75,95 @@ button.back-btn { background:#444; color:white; }
 </main>
 
 <script>
-// Elements
-const introScreen = document.getElementById("intro-screen");
-const mainMenu = document.getElementById("main-menu");
-const chords = document.getElementById("chords");
-const practice = document.getElementById("practice");
-const strum = document.getElementById("strum");
-const enterBtn = document.getElementById("enter-btn");
-const darkToggle = document.getElementById("dark-toggle");
+document.addEventListener("DOMContentLoaded", function() {
+  const introScreen = document.getElementById("intro-screen");
+  const mainMenu = document.getElementById("main-menu");
+  const chords = document.getElementById("chords");
+  const practice = document.getElementById("practice");
+  const strum = document.getElementById("strum");
+  const enterBtn = document.getElementById("enter-btn");
+  const darkToggle = document.getElementById("dark-toggle");
 
-// Dark mode toggle
-darkToggle.addEventListener("click", () => {
-  if(document.body.classList.contains("dark-mode")){
-    document.body.classList.remove("dark-mode");
-    document.body.classList.add("light-mode");
-  } else {
-    document.body.classList.remove("light-mode");
-    document.body.classList.add("dark-mode");
+  // Dark mode toggle
+  darkToggle.addEventListener("click", () => {
+    if(document.body.classList.contains("dark-mode")){
+      document.body.classList.remove("dark-mode");
+      document.body.classList.add("light-mode");
+    } else {
+      document.body.classList.remove("light-mode");
+      document.body.classList.add("dark-mode");
+    }
+  });
+
+  // Menu navigation
+  enterBtn.addEventListener("click", () => {
+    introScreen.classList.add("hidden");
+    mainMenu.classList.remove("hidden");
+  });
+
+  function showChords(){ mainMenu.classList.add("hidden"); chords.classList.remove("hidden"); }
+  function showPractice(){ mainMenu.classList.add("hidden"); practice.classList.remove("hidden"); nextPracticeChord(); }
+  function showStrum(){ mainMenu.classList.add("hidden"); strum.classList.remove("hidden"); loadRandomSong(); }
+  function goBack(){ chords.classList.add("hidden"); practice.classList.add("hidden"); strum.classList.add("hidden"); mainMenu.classList.remove("hidden"); }
+
+  window.showChords = showChords;
+  window.showPractice = showPractice;
+  window.showStrum = showStrum;
+  window.goBack = goBack;
+
+  // Chords display with local images
+  const chordNames = ['c','a','d','g','e','em','am','cmaj7','dm','f','f#','f#m','b','bb','bm','c#m','g#m'];
+  const chordGrid = document.getElementById("chord-grid");
+
+  chordNames.forEach(chord => {
+    const card = document.createElement("div");
+    card.classList.add("chord-card");
+    card.innerHTML = `<img src="image/${chord}.png" alt="${chord.toUpperCase()} chord"><p>${chord.toUpperCase()}</p>`;
+    chordGrid.appendChild(card);
+  });
+
+  // Practice Chords Randomizer
+  const practiceChords = chordNames.map(c=>c.toUpperCase());
+  const practiceDisplay = document.getElementById("practice-chord-display");
+  const feedback = document.getElementById("practice-feedback");
+  let currentPractice = "";
+
+  function nextPracticeChord(){
+    currentPractice = practiceChords[Math.floor(Math.random()*practiceChords.length)];
+    practiceDisplay.textContent = currentPractice;
+    feedback.textContent = "";
   }
-});
+  document.getElementById("next-chord").addEventListener("click", nextPracticeChord);
 
-// Menu navigation
-enterBtn.addEventListener("click", () => { introScreen.classList.add("hidden"); mainMenu.classList.remove("hidden"); });
-function showChords(){ mainMenu.classList.add("hidden"); chords.classList.remove("hidden"); }
-function showPractice(){ mainMenu.classList.add("hidden"); practice.classList.remove("hidden"); nextPracticeChord(); }
-function showStrum(){ mainMenu.classList.add("hidden"); strum.classList.remove("hidden"); loadRandomSong(); }
-function goBack(){ chords.classList.add("hidden"); practice.classList.add("hidden"); strum.classList.add("hidden"); mainMenu.classList.remove("hidden"); }
+  // Strum Patterns
+  const songs = [
+    {name:"Huling El Bimbo", pattern:"DD UUDD DU"},
+    {name:"14", pattern:"DD UDUDD DU"},
+    {name:"Kahit Maputi Na Ang Buhok Ko", pattern:"DUD DUD"},
+    {name:"Perfect", pattern:"DD UU DU"},
+  ];
+  let currentSong;
 
-// Chords display with local images
-const chordNames = ['c','a','d','g','e','em','am','cmaj7','dm','f','f#','f#m','b','bb','bm','c#m','g#m'];
-const chordGrid = document.getElementById("chord-grid");
-
-chordNames.forEach(chord => {
-  const card = document.createElement("div");
-  card.classList.add("chord-card");
-  card.innerHTML = `<img src="image/${chord}.png" alt="${chord.toUpperCase()} chord"><p>${chord.toUpperCase()}</p>`;
-  chordGrid.appendChild(card);
-});
-
-// Practice Chords Randomizer
-const practiceChords = chordNames.map(c=>c.toUpperCase());
-const practiceDisplay = document.getElementById("practice-chord-display");
-const feedback = document.getElementById("practice-feedback");
-let currentPractice = "";
-
-function nextPracticeChord(){
-  currentPractice = practiceChords[Math.floor(Math.random()*practiceChords.length)];
-  practiceDisplay.textContent = currentPractice;
-  feedback.textContent = "";
-}
-document.getElementById("next-chord").addEventListener("click", nextPracticeChord);
-
-// Strum Patterns
-const songs = [
-  {name:"Huling El Bimbo", pattern:"DD UUDD DU"},
-  {name:"14", pattern:"DD UDUDD DU"},
-  {name:"Kahit Maputi Na Ang Buhok Ko", pattern:"DUD DUD"},
-  {name:"Perfect", pattern:"DD UU DU"},
-];
-let currentSong;
-
-function loadRandomSong(){
-  currentSong = songs[Math.floor(Math.random()*songs.length)];
-  document.getElementById("song-pattern").textContent = `Song: ${currentSong.name} | Pattern: ${currentSong.pattern}`;
-  document.getElementById("strum-feedback").textContent = "";
-}
-
-// Mic test placeholder
-document.getElementById("start-mic").addEventListener("click", ()=>{
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-      document.getElementById("strum-feedback").textContent = "Mic is active! Now try strumming.";
-      // stop immediately since this is just a placeholder for demo
-      stream.getTracks().forEach(track => track.stop());
-    }).catch(err => {
-      document.getElementById("strum-feedback").textContent = "Mic access denied.";
-    });
-  } else {
-    document.getElementById("strum-feedback").textContent = "Mic not supported in this browser.";
+  function loadRandomSong(){
+    currentSong = songs[Math.floor(Math.random()*songs.length)];
+    document.getElementById("song-pattern").textContent = `Song: ${currentSong.name} | Pattern: ${currentSong.pattern}`;
+    document.getElementById("strum-feedback").textContent = "";
   }
+
+  // Mic test placeholder
+  document.getElementById("start-mic").addEventListener("click", ()=>{
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        document.getElementById("strum-feedback").textContent = "Mic is active! Now try strumming.";
+        stream.getTracks().forEach(track => track.stop());
+      }).catch(err => {
+        document.getElementById("strum-feedback").textContent = "Mic access denied.";
+      });
+    } else {
+      document.getElementById("strum-feedback").textContent = "Mic not supported in this browser.";
+    }
+  });
+
 });
 </script>
 </body>
