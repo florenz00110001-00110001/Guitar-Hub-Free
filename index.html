@@ -42,6 +42,7 @@ select { padding:10px; border-radius:8px; font-size:1em; margin:10px; }
     <button onclick="showChords()">View Chords</button>
     <button onclick="showPractice()">Practice Chords</button>
     <button onclick="showStrum()">Practice Strum</button>
+    <button onclick="startChordQuiz()">Chord Recognition Practice</button>
     <button onclick="window.open('https://www.guitartuna.com/', '_blank')">Tune in using GuitarTuna!</button>
   </div>
 
@@ -59,6 +60,15 @@ select { padding:10px; border-radius:8px; font-size:1em; margin:10px; }
     <button id="next-chord">Next Chord</button>
     <p id="practice-feedback"></p>
     <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
+
+  <!-- Chord Recognition Quiz -->
+  <div id="chord-quiz" class="hidden">
+    <h2>Chord Recognition Practice</h2>
+    <div id="quiz-chord-display" style="font-size:2em; margin:20px;"></div>
+    <div id="quiz-choices" class="chord-grid"></div>
+    <div id="quiz-score" style="margin-top:20px; font-weight:bold;"></div>
+    <button class="back-btn" onclick="goBackFromQuiz()">⬅ Back</button>
   </div>
 
   <!-- Strum -->
@@ -188,6 +198,68 @@ document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("strum-feedback").textContent = "Mic not supported in this browser.";
     }
   });
+
+  // ✅ Chord Recognition Quiz
+  const quizChords = allChords.map(c => c.toUpperCase());
+  let quizIndex = 0;
+  let quizScore = 0;
+
+  window.startChordQuiz = function(){
+    quizIndex = 0;
+    quizScore = 0;
+    practice.classList.add("hidden");
+    chords.classList.add("hidden");
+    strum.classList.add("hidden");
+    document.getElementById("chord-quiz").classList.remove("hidden");
+    nextQuizChord();
+  }
+
+  function nextQuizChord(){
+    if(quizIndex >= 10){
+      document.getElementById("quiz-chord-display").textContent = "";
+      document.getElementById("quiz-choices").innerHTML = "";
+      document.getElementById("quiz-score").textContent = `Quiz finished! Your score: ${quizScore}/10`;
+      return;
+    }
+
+    const correctChord = quizChords[Math.floor(Math.random()*quizChords.length)];
+    let choices = [correctChord];
+    while(choices.length < 4){
+      const randomChoice = quizChords[Math.floor(Math.random()*quizChords.length)];
+      if(!choices.includes(randomChoice)) choices.push(randomChoice);
+    }
+    choices.sort(() => Math.random() - 0.5);
+
+    document.getElementById("quiz-chord-display").textContent = `Chord ${quizIndex+1}: Identify this chord`;
+    const choicesDiv = document.getElementById("quiz-choices");
+    choicesDiv.innerHTML = "";
+    choices.forEach(c => {
+      const btn = document.createElement("button");
+      btn.textContent = c;
+      btn.onclick = () => { checkQuizAnswer(c, correctChord); };
+      choicesDiv.appendChild(btn);
+    });
+
+    // 5-second auto next
+    setTimeout(() => {
+      if(document.getElementById("quiz-chord-display").textContent.includes(`Chord ${quizIndex+1}`)){
+        quizIndex++;
+        nextQuizChord();
+      }
+    }, 5000);
+  }
+
+  function checkQuizAnswer(selected, correct){
+    if(selected === correct) quizScore++;
+    quizIndex++;
+    nextQuizChord();
+  }
+
+  window.goBackFromQuiz = function(){
+    document.getElementById("chord-quiz").classList.add("hidden");
+    mainMenu.classList.remove("hidden");
+  }
+
 });
 </script>
 </body>
