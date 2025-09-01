@@ -47,9 +47,7 @@ button.back-btn { background:#444; color:white; }
   <!-- Chords -->
   <div id="chords" class="hidden">
     <h2>Basic Chords</h2>
-    <div class="chord-grid" id="chord-grid">
-      <!-- Chords loaded by JS -->
-    </div>
+    <div class="chord-grid" id="chord-grid"></div>
     <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
 
@@ -84,18 +82,11 @@ document.addEventListener("DOMContentLoaded", function() {
   const enterBtn = document.getElementById("enter-btn");
   const darkToggle = document.getElementById("dark-toggle");
 
-  // Dark mode toggle
   darkToggle.addEventListener("click", () => {
-    if(document.body.classList.contains("dark-mode")){
-      document.body.classList.remove("dark-mode");
-      document.body.classList.add("light-mode");
-    } else {
-      document.body.classList.remove("light-mode");
-      document.body.classList.add("dark-mode");
-    }
+    document.body.classList.toggle("dark-mode");
+    document.body.classList.toggle("light-mode");
   });
 
-  // Menu navigation
   enterBtn.addEventListener("click", () => {
     introScreen.classList.add("hidden");
     mainMenu.classList.remove("hidden");
@@ -111,19 +102,39 @@ document.addEventListener("DOMContentLoaded", function() {
   window.showStrum = showStrum;
   window.goBack = goBack;
 
-  // Chords display with local images
-  const chordNames = ['c','a','d','g','e','em','am','cmaj7','dm','f','f#','f#m','b','bb','bm','c#m','g#m'];
+  // Local images for initial chords
+  const localChords = ['c','a','d','g','e','em'];
   const chordGrid = document.getElementById("chord-grid");
-
-  chordNames.forEach(chord => {
+  localChords.forEach(chord => {
     const card = document.createElement("div");
     card.classList.add("chord-card");
     card.innerHTML = `<img src="image/${chord}.png" alt="${chord.toUpperCase()} chord"><p>${chord.toUpperCase()}</p>`;
     chordGrid.appendChild(card);
   });
 
+  // URL images for remaining chords
+  const remainingChords = [
+    {name:'Am', url:'https://i.imgur.com/0XxL5t9.png'},
+    {name:'Cmaj7', url:'https://i.imgur.com/Zb8eE3N.png'},
+    {name:'Dm', url:'https://i.imgur.com/7U7uFhM.png'},
+    {name:'F', url:'https://i.imgur.com/8oQv2uH.png'},
+    {name:'F#', url:'https://i.imgur.com/Txr1k8R.png'},
+    {name:'F#m', url:'https://i.imgur.com/8HMTLPO.png'},
+    {name:'B', url:'https://i.imgur.com/2e1yIuO.png'},
+    {name:'Bb', url:'https://i.imgur.com/ftODlHz.png'},
+    {name:'Bm', url:'https://i.imgur.com/xQ7FjNf.png'},
+    {name:'C#m', url:'https://i.imgur.com/Io6Bq8D.png'},
+    {name:'G#m', url:'https://i.imgur.com/Z2iX8qC.png'}
+  ];
+  remainingChords.forEach(chord => {
+    const card = document.createElement("div");
+    card.classList.add("chord-card");
+    card.innerHTML = `<img src="${chord.url}" alt="${chord.name} chord"><p>${chord.name}</p>`;
+    chordGrid.appendChild(card);
+  });
+
   // Practice Chords Randomizer
-  const practiceChords = chordNames.map(c=>c.toUpperCase());
+  const practiceChords = localChords.concat(remainingChords.map(c=>c.name));
   const practiceDisplay = document.getElementById("practice-chord-display");
   const feedback = document.getElementById("practice-feedback");
   let currentPractice = "";
@@ -163,7 +174,6 @@ document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("strum-feedback").textContent = "Mic not supported in this browser.";
     }
   });
-
 });
 </script>
 </body>
