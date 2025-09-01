@@ -111,12 +111,11 @@ document.addEventListener("DOMContentLoaded", function() {
   window.showStrum = showStrum;
   window.goBack = goBack;
 
-  // ✅ All chords now local
+  // ✅ ALL chords now use local images
   const allChords = [
     'c','a','d','g','e','em',
     'am','cmaj7','dm','f','fsharp','fsharpm',
-    'b','bb','bm','csharpm','gsharpm',
-    'a7','e7','d7','g7'
+    'b','bb','bm','csharpm','gsharpm'
   ];
   const chordGrid = document.getElementById("chord-grid");
   allChords.forEach(chord => {
@@ -127,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   // Practice Chords Randomizer
-  const practiceChords = allChords.map(c=>c.toUpperCase());
+  const practiceChords = allChords.map(c => c.toUpperCase());
   const practiceDisplay = document.getElementById("practice-chord-display");
   const feedback = document.getElementById("practice-feedback");
   let currentPractice = "";
