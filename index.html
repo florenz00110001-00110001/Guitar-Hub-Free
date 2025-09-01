@@ -8,8 +8,8 @@
 body { font-family: Arial, Helvetica, sans-serif; background:#111; color:white; text-align:center; margin:0; padding:0;}
 header { width:100%; background:#000; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; position:fixed; top:0; left:0; z-index:1000;}
 .logo { display:flex; align-items:center; font-weight:bold; font-size:1.4em;}
-.logo span.guitar { color:white; }
-.logo span.hub { color:black; background:orange; padding:4px 8px; border-radius:4px; margin-left:5px;}
+.logo span.guitar { color:black; }
+.logo span.hub { color:black; background:yellow; padding:4px 8px; border-radius:4px; margin-left:5px;}
 main { padding-top:70px;}
 button { padding:10px 20px; margin:10px; background:orange; border:none; border-radius:8px; cursor:pointer;}
 .hidden { display:none; }
@@ -44,11 +44,11 @@ audio { margin-top:15px; width:80%; }
   <button onclick="goBack()">⬅ Back</button>
 </div>
 
-<!-- Practice Chords -->
+<!-- Chord Practice -->
 <div id="practice-chords" class="hidden">
   <h2>Practice Chords</h2>
-  <button onclick="startChordPractice()">Start Practice</button>
-  <div id="chord-grid-practice" class="chord-grid"></div>
+  <div id="current-chord" style="font-size:2em; margin:20px;"></div>
+  <button id="start-chord-rec">Start Listening</button>
   <p id="chord-mistakes">You have (0) mistakes wrong</p>
   <button onclick="restartChords()">Restart</button>
   <button onclick="goBack()">⬅ Back</button>
@@ -100,57 +100,72 @@ document.addEventListener('DOMContentLoaded', () => {
     "b.png","bb.png","bm.png","csharpm.png","gsharpm.png"
   ];
 
-  // Generate chord cards for both view and practice
+  // View Chords
   const chordGridView = document.getElementById("chord-grid-view");
-  const chordGridPractice = document.getElementById("chord-grid-practice");
+  images.forEach(filename => {
+    const chordName = filename.split('.')[0].toLowerCase();
+    const card = document.createElement("div");
+    card.classList.add("chord-card");
+    card.innerHTML = `<img src="images/${filename}" class="chord-img"><p>${chordName}</p>`;
+    chordGridView.appendChild(card);
+  });
 
-  function generateChordCards(grid){
-    grid.innerHTML = "";
-    images.forEach(filename => {
-      const chordName = filename.split('.')[0].toLowerCase();
-      const card = document.createElement("div");
-      card.classList.add("chord-card");
-      card.dataset.chord = chordName;
-      card.innerHTML = `
-        <img src="images/${filename}" class="chord-img">
-        <p>${chordName}</p>
-      `;
-      grid.appendChild(card);
-    });
-  }
+  // ----- Chord Practice -----
+  const chordSequence = ["C","G","Am","F"]; // Example progression
+  let currentIndex = 0;
+  let mistakes = 0;
 
-  generateChordCards(chordGridView);
-  generateChordCards(chordGridPractice);
+  const currentChordDiv = document.getElementById("current-chord");
+  const chordMistakes = document.getElementById("chord-mistakes");
 
-  // ----- Practice Chords -----
-  let chordMistakes = 0;
-  let practiceCards = [];
-
-  window.startChordPractice = () => {
-    chordMistakes = 0;
-    document.getElementById('chord-mistakes').textContent = `You have (${chordMistakes}) mistakes wrong`;
-    practiceCards = document.querySelectorAll("#chord-grid-practice .chord-card");
-    highlightNextChord();
-  }
-
-  function highlightNextChord(){
-    practiceCards.forEach(c=>c.style.border='none');
-    const idx = Math.floor(Math.random()*practiceCards.length);
-    practiceCards[idx].style.border='3px solid orange';
+  function showCurrentChord() {
+    currentChordDiv.textContent = chordSequence[currentIndex];
   }
 
   window.restartChords = () => {
-    practiceCards.forEach(c=>c.style.border='none');
-    chordMistakes = 0;
-    document.getElementById('chord-mistakes').textContent = `You have (${chordMistakes}) mistakes wrong`;
+    currentIndex = 0; mistakes=0;
+    chordMistakes.textContent=`You have (${mistakes}) mistakes wrong`;
+    showCurrentChord();
   }
+
+  showCurrentChord();
+
+  document.getElementById("start-chord-rec").addEventListener('click', async ()=>{
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      const mediaRecorder = new MediaRecorder(stream);
+      let audioChunks = [];
+      mediaRecorder.start();
+      chordMistakes.textContent='Listening...';
+
+      mediaRecorder.ondataavailable = e=>audioChunks.push(e.data);
+      mediaRecorder.onstop = ()=>{
+        const audioBlob = new Blob(audioChunks,{type:'audio/wav'});
+        const audioUrl = URL.createObjectURL(audioBlob);
+        // Here you would analyze audio to detect chord
+        // Placeholder: randomly mark correct/wrong
+        if(Math.random()<0.7){
+          currentIndex = (currentIndex+1)%chordSequence.length;
+        } else {
+          mistakes++;
+        }
+        chordMistakes.textContent=`You have (${mistakes}) mistakes wrong`;
+        showCurrentChord();
+      }
+      setTimeout(()=>mediaRecorder.stop(), 4000); // 4 sec recording
+    } catch(err){
+      chordMistakes.textContent='Mic access denied or not supported!';
+      console.error(err);
+    }
+  });
 
   // ----- Strum Practice -----
   const songs = {
     'Huling El Bimbo': 'DD UUDD DU',
     '14': 'DD UDUDD DU',
     'Tadhana': 'DDU UDU',
-    'Ikaw': 'D D U D U'
+    'Ikaw': 'D D U D U',
+    'Narda': 'D DU D DU'
   };
 
   const songSelect = document.getElementById('song-select');
@@ -160,36 +175,45 @@ document.addEventListener('DOMContentLoaded', () => {
     songSelect.appendChild(opt);
   }
 
-  let mediaRecorder;
-  let audioChunks = [];
+  const patternDisplay = document.getElementById('pattern-display');
+  songSelect.addEventListener('change', ()=>{
+    patternDisplay.textContent = songs[songSelect.value];
+  });
+  patternDisplay.textContent = songs[songSelect.value];
+
+  let mediaRecorderStrum;
+  let audioChunksStrum = [];
   const audioPlayback = document.getElementById('audio-playback');
+  const strumStatus = document.getElementById('strum-status');
 
   document.getElementById('start-strum-rec').addEventListener('click', async ()=>{
-    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-    audioChunks = [];
-    mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.start();
-    document.getElementById('strum-status').textContent='Recording...';
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      audioChunksStrum = [];
+      mediaRecorderStrum = new MediaRecorder(stream);
+      mediaRecorderStrum.start();
+      strumStatus.textContent='Recording...';
 
-    mediaRecorder.addEventListener('dataavailable', event=>{
-      audioChunks.push(event.data);
-    });
+      mediaRecorderStrum.ondataavailable = e=>audioChunksStrum.push(e.data);
+      mediaRecorderStrum.onstop = ()=>{
+        const audioBlob = new Blob(audioChunksStrum,{type:'audio/wav'});
+        const audioUrl = URL.createObjectURL(audioBlob);
+        audioPlayback.src = audioUrl;
+        audioPlayback.classList.remove('hidden');
+        strumStatus.textContent='Recording Complete!';
+      }
 
-    mediaRecorder.addEventListener('stop', ()=>{
-      const audioBlob = new Blob(audioChunks,{type:'audio/wav'});
-      const audioUrl = URL.createObjectURL(audioBlob);
-      audioPlayback.src = audioUrl;
-      audioPlayback.classList.remove('hidden');
-      document.getElementById('strum-status').textContent='Recording Complete!';
-    });
-
-    setTimeout(()=>{ mediaRecorder.stop(); }, 5000); // 5 sec record
+      setTimeout(()=>mediaRecorderStrum.stop(),5000); // 5 sec record
+    } catch(err){
+      strumStatus.textContent='Mic access denied or not supported!';
+      console.error(err);
+    }
   });
 
   window.restartStrum = () => {
     audioPlayback.classList.add('hidden');
     audioPlayback.src='';
-    document.getElementById('strum-status').textContent='Record your strum';
+    strumStatus.textContent='Record your strum';
   }
 
 });
