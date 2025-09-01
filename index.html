@@ -111,39 +111,23 @@ document.addEventListener("DOMContentLoaded", function() {
   window.showStrum = showStrum;
   window.goBack = goBack;
 
-  // Local images for initial chords
-  const localChords = ['c','a','d','g','e','em'];
+  // ✅ All chords now local
+  const allChords = [
+    'c','a','d','g','e','em',
+    'am','cmaj7','dm','f','fsharp','fsharpm',
+    'b','bb','bm','csharpm','gsharpm',
+    'a7','e7','d7','g7'
+  ];
   const chordGrid = document.getElementById("chord-grid");
-  localChords.forEach(chord => {
+  allChords.forEach(chord => {
     const card = document.createElement("div");
     card.classList.add("chord-card");
     card.innerHTML = `<img src="image/${chord}.png" alt="${chord.toUpperCase()} chord" onerror="this.src='image/placeholder.png'"><p>${chord.toUpperCase()}</p>`;
     chordGrid.appendChild(card);
   });
 
-  // External images (fixed with working links)
-  const remainingChords = [
-    {name:'Am', url:'https://upload.wikimedia.org/wikipedia/commons/4/45/Chord-diagram-Am.png'},
-    {name:'Cmaj7', url:'https://upload.wikimedia.org/wikipedia/commons/0/07/Cmaj7_chord.png'},
-    {name:'Dm', url:'https://upload.wikimedia.org/wikipedia/commons/d/d6/Chord-diagram-Dm.png'},
-    {name:'F', url:'https://upload.wikimedia.org/wikipedia/commons/7/7a/F_chord_diagram.png'},
-    {name:'F#', url:'https://i.ibb.co/0YfRZc5/fsharp.png'},
-    {name:'F#m', url:'https://i.ibb.co/mJX3qHR/fsharpm.png'},
-    {name:'B', url:'https://i.ibb.co/fxqcsdf/b.png'},
-    {name:'Bb', url:'https://i.ibb.co/0sPbZ7L/bb.png'},
-    {name:'Bm', url:'https://i.ibb.co/zWpkTnt/bm.png'},
-    {name:'C#m', url:'https://i.ibb.co/7y4Q4FG/csharpm.png'},
-    {name:'G#m', url:'https://i.ibb.co/gm4W8qh/gsharpm.png'}
-  ];
-  remainingChords.forEach(chord => {
-    const card = document.createElement("div");
-    card.classList.add("chord-card");
-    card.innerHTML = `<img src="${chord.url}" alt="${chord.name} chord" onerror="this.src='image/placeholder.png'"><p>${chord.name}</p>`;
-    chordGrid.appendChild(card);
-  });
-
   // Practice Chords Randomizer
-  const practiceChords = localChords.concat(remainingChords.map(c=>c.name));
+  const practiceChords = allChords.map(c=>c.toUpperCase());
   const practiceDisplay = document.getElementById("practice-chord-display");
   const feedback = document.getElementById("practice-feedback");
   let currentPractice = "";
