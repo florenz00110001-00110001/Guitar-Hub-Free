@@ -19,6 +19,7 @@ button.back-btn { background:#444; color:white; }
 .chord-card img { width:100px; height:auto; }
 .dark-mode { background:#111; color:white; }
 .light-mode { background:white; color:black; }
+select { padding:10px; border-radius:8px; font-size:1em; margin:10px; }
 </style>
 </head>
 <body>
@@ -64,7 +65,10 @@ button.back-btn { background:#444; color:white; }
   <div id="strum" class="hidden">
     <h2>Practice Strum</h2>
     <div>
+      <label for="song-select">Choose Song:</label>
+      <select id="song-select"></select>
       <p id="song-pattern">Pattern: </p>
+      <button id="random-song">Random Song</button>
       <button id="start-mic">Start Mic Test</button>
       <p id="strum-feedback"></p>
     </div>
@@ -94,7 +98,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
   function showChords(){ mainMenu.classList.add("hidden"); chords.classList.remove("hidden"); }
   function showPractice(){ mainMenu.classList.add("hidden"); practice.classList.remove("hidden"); nextPracticeChord(); }
-  function showStrum(){ mainMenu.classList.add("hidden"); strum.classList.remove("hidden"); loadRandomSong(); }
+  function showStrum(){ 
+    mainMenu.classList.add("hidden"); 
+    strum.classList.remove("hidden"); 
+    populateSongSelect();
+    loadRandomSong();
+  }
   function goBack(){ chords.classList.add("hidden"); practice.classList.add("hidden"); strum.classList.add("hidden"); mainMenu.classList.remove("hidden"); }
 
   window.showChords = showChords;
@@ -112,19 +121,19 @@ document.addEventListener("DOMContentLoaded", function() {
     chordGrid.appendChild(card);
   });
 
-  // Fixed external images
+  // External images (fixed direct links)
   const remainingChords = [
-    {name:'Am', url:'https://i.imgur.com/IH1FJSe.png'},
-    {name:'Cmaj7', url:'https://i.imgur.com/tCRi6fl.png'},
-    {name:'Dm', url:'https://i.imgur.com/95P6m3B.png'},
-    {name:'F', url:'https://i.imgur.com/yV3Pkno.png'},
-    {name:'F#', url:'https://i.imgur.com/H9ZllpE.png'},
-    {name:'F#m', url:'https://i.imgur.com/bm1oOKv.png'},
-    {name:'B', url:'https://i.imgur.com/1osxX5e.png'},
-    {name:'Bb', url:'https://i.imgur.com/QAKoP7j.png'},
-    {name:'Bm', url:'https://i.imgur.com/nDrMwPr.png'},
-    {name:'C#m', url:'https://i.imgur.com/Xxmy0eu.png'},
-    {name:'G#m', url:'https://i.imgur.com/46VtszJ.png'}
+    {name:'Am', url:'https://i.ibb.co/zQmQ2Rn/am.png'},
+    {name:'Cmaj7', url:'https://i.ibb.co/znBr3nW/cmaj7.png'},
+    {name:'Dm', url:'https://i.ibb.co/ZXqF4LN/dm.png'},
+    {name:'F', url:'https://i.ibb.co/pf6S4Gm/f.png'},
+    {name:'F#', url:'https://i.ibb.co/0YfRZc5/fsharp.png'},
+    {name:'F#m', url:'https://i.ibb.co/mJX3qHR/fsharpm.png'},
+    {name:'B', url:'https://i.ibb.co/fxqcsdf/b.png'},
+    {name:'Bb', url:'https://i.ibb.co/0sPbZ7L/bb.png'},
+    {name:'Bm', url:'https://i.ibb.co/zWpkTnt/bm.png'},
+    {name:'C#m', url:'https://i.ibb.co/7y4Q4FG/csharpm.png'},
+    {name:'G#m', url:'https://i.ibb.co/gm4W8qh/gsharpm.png'}
   ];
   remainingChords.forEach(chord => {
     const card = document.createElement("div");
@@ -160,6 +169,28 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("song-pattern").textContent = `Song: ${currentSong.name} | Pattern: ${currentSong.pattern}`;
     document.getElementById("strum-feedback").textContent = "";
   }
+
+  // Populate dropdown
+  function populateSongSelect(){
+    const select = document.getElementById("song-select");
+    select.innerHTML = "";
+    songs.forEach(song => {
+      const option = document.createElement("option");
+      option.value = song.name;
+      option.textContent = song.name;
+      select.appendChild(option);
+    });
+    select.addEventListener("change", function(){
+      const selected = songs.find(s => s.name === this.value);
+      if(selected){
+        currentSong = selected;
+        document.getElementById("song-pattern").textContent = `Song: ${selected.name} | Pattern: ${selected.pattern}`;
+      }
+    });
+  }
+
+  // Random song button
+  document.getElementById("random-song").addEventListener("click", loadRandomSong);
 
   // Mic test placeholder
   document.getElementById("start-mic").addEventListener("click", ()=>{
