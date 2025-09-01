@@ -340,7 +340,33 @@ strumSongs.forEach(s => {
 });
 document.getElementById("strum").insertBefore(strumSelect, document.getElementById("strum-feedback"));
 
+<!-- Login Screen -->
+<div id="login-screen">
+  <h2>Login</h2>
+  <input type="email" id="login-email" placeholder="Email">
+  <input type="password" id="login-password" placeholder="Password">
+  <button id="login-btn">Login</button>
+  <button id="continue-btn">Continue Without Account</button>
+</div>
 
+<script>
+document.getElementById("login-btn").addEventListener("click", () => {
+  const email = document.getElementById("login-email").value;
+  const password = document.getElementById("login-password").value;
+
+  if(email && password){
+    // Simulate login success (replace with Firebase auth if used)
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("main-menu").classList.remove("hidden");
+  } else {
+    alert("Please enter email and password");
+  }
+});
+
+document.getElementById("continue-btn").addEventListener("click", () => {
+  document.getElementById("login-screen").classList.add("hidden");
+  document.getElementById("main-menu").classList.remove("hidden");
+});
 </script>
 </body>
 </html>
