@@ -21,6 +21,7 @@ button.back-btn { background:#444; color:white; }
 .light-mode { background:white; color:black; }
 select { padding:10px; border-radius:8px; font-size:1em; margin:10px; }
 #quiz-chord-display img { width:150px; height:auto; margin-bottom:10px; }
+#quiz-timer { font-weight:bold; margin-bottom:10px; font-size:1.2em; }
 </style>
 </head>
 <body>
@@ -121,7 +122,7 @@ document.addEventListener("DOMContentLoaded", function() {
   window.showStrum = showStrum;
   window.goBack = goBack;
 
-  // ALL chords now use local images
+  // ALL chords use local images
   const allChords = [
     'c','a','d','g','e','em',
     'am','cmaj7','dm','f','fsharp','fsharpm',
@@ -202,7 +203,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const quizChords = allChords.map(c => c.toUpperCase());
   let quizIndex = 0;
   let quizScore = 0;
-  let quizTimeout;
+  let quizTimeout, countdownInterval, countdown;
 
   window.startChordQuiz = function(){
     quizIndex = 0;
@@ -216,6 +217,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   function nextQuizChord(){
     if(quizTimeout) clearTimeout(quizTimeout);
+    if(countdownInterval) clearInterval(countdownInterval);
 
     if(quizIndex >= 10){
       document.getElementById("quiz-chord-display").innerHTML = "";
@@ -233,38 +235,4 @@ document.addEventListener("DOMContentLoaded", function() {
     choices.sort(() => Math.random() - 0.5);
 
     // Show chord image
-    const chordNameLower = correctChord.toLowerCase();
-    const imgHTML = `<img src="image/${chordNameLower}.png" alt="${correctChord}" onerror="this.src='image/placeholder.png'">`;
-    document.getElementById("quiz-chord-display").innerHTML = imgHTML;
-
-    const choicesDiv = document.getElementById("quiz-choices");
-    choicesDiv.innerHTML = "";
-    choices.forEach(c => {
-      const btn = document.createElement("button");
-      btn.textContent = c;
-      btn.onclick = () => { checkQuizAnswer(c, correctChord); };
-      choicesDiv.appendChild(btn);
-    });
-
-    quizTimeout = setTimeout(() => {
-      quizIndex++;
-      nextQuizChord();
-    }, 5000);
-  }
-
-  function checkQuizAnswer(selected, correct){
-    if(selected === correct) quizScore++;
-    quizIndex++;
-    nextQuizChord();
-  }
-
-  window.goBackFromQuiz = function(){
-    if(quizTimeout) clearTimeout(quizTimeout);
-    document.getElementById("chord-quiz").classList.add("hidden");
-    mainMenu.classList.remove("hidden");
-  }
-
-});
-</script>
-</body>
-</html>
+    const chordNameLower = correctChord.toLowerCase
