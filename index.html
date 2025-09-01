@@ -16,7 +16,7 @@ button.back-btn { background:#444; color:white; }
 .hidden { display:none; }
 .chord-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:15px; padding:20px; }
 .chord-card { background:#222; padding:10px; border-radius:10px; box-shadow:0 0 10px #000; width:120px; }
-.chord-card img { width:100px; }
+.chord-card img { width:100px; height:auto; }
 .dark-mode { background:#111; color:white; }
 .light-mode { background:white; color:black; }
 </style>
@@ -108,11 +108,11 @@ document.addEventListener("DOMContentLoaded", function() {
   localChords.forEach(chord => {
     const card = document.createElement("div");
     card.classList.add("chord-card");
-    card.innerHTML = `<img src="image/${chord}.png" alt="${chord.toUpperCase()} chord"><p>${chord.toUpperCase()}</p>`;
+    card.innerHTML = `<img src="image/${chord}.png" alt="${chord.toUpperCase()} chord" onerror="this.src='image/placeholder.png'"><p>${chord.toUpperCase()}</p>`;
     chordGrid.appendChild(card);
   });
 
-  // URL images for remaining chords
+  // External images for other chords (fixed Imgur direct links)
   const remainingChords = [
     {name:'Am', url:'https://i.imgur.com/0XxL5t9.png'},
     {name:'Cmaj7', url:'https://i.imgur.com/Zb8eE3N.png'},
@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function() {
   remainingChords.forEach(chord => {
     const card = document.createElement("div");
     card.classList.add("chord-card");
-    card.innerHTML = `<img src="${chord.url}" alt="${chord.name} chord"><p>${chord.name}</p>`;
+    card.innerHTML = `<img src="${chord.url}" alt="${chord.name} chord" onerror="this.src='image/placeholder.png'"><p>${chord.name}</p>`;
     chordGrid.appendChild(card);
   });
 
