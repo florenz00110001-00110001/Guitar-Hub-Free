@@ -5,2449 +5,128 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Guitar Hub Trainer</title>
 <style>
-/* --- General Styles --- */
-body{margin:0;padding:0;font-family:Arial,sans-serif;background:#111;color:white;transition:0.3s;}
-h1,h2{margin:10px;}
-button,input,select{padding:10px;margin:5px;border-radius:6px;border:none;font-size:1em;cursor:pointer;}
-button.orange{background:orange;color:black;}
-.hidden{display:none;}
-header{width:100%;background:#000;padding:10px 15px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;z-index:1000;}
-.logo{font-weight:bold;font-size:1.6em;color:white;}
-main{padding-top:80px;}
-.chord-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:10px;}
-.chord-card{background:#222;padding:10px;border-radius:8px;width:100px;color:white;}
-.chord-card img{width:80px;height:auto;}
-input[type="text"],input[type="password"],select{width:200px;}
-#learn-chords pre{white-space:pre-wrap;font-family:monospace;background:#222;padding:10px;border-radius:6px;}
-iframe{width:100%;height:400px;border:0;margin-top:10px;}
-#burger-hud{background:#222;padding:5px;border-radius:6px;margin:5px;text-align:left;}
-.dark-mode{background:#111;color:white;}
-.dark-mode .chord-card{background:#333;}
-@media (max-width:600px){
-  input,select,button{width:90%;}
-  .chord-card{width:45%;}
-}
+  /* Global Styles */
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #111;
+    color: white;
+    text-align: center;
+  }
+  header {
+    width: 100%;
+    background: #000;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+  }
+  .logo {
+    font-weight: bold;
+    font-size: 1.6em;
+    color: orange;
+  }
+  button, input, select {
+    padding: 8px;
+    margin: 5px;
+    border-radius: 6px;
+    border: none;
+    font-size: 1em;
+    cursor: pointer;
+  }
+  button.orange {
+    background-color: orange;
+    color: black;
+  }
+  .hidden { display: none; }
+  .chord-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+  }
+  .chord-card {
+    background: #222;
+    padding: 10px;
+    border-radius: 8px;
+    width: 100px;
+    color: white;
+  }
+  .chord-card img { width: 80px; height: auto; }
+  ul { list-style: none; padding: 0; }
+  li { padding: 5px; margin: 3px; background: #222; border-radius: 6px; cursor: pointer; }
+  iframe { width: 100%; height: 400px; border: 0; margin-top: 10px; }
+
+  /* Login Styles */
+  #intro-screen input { width: 200px; }
+  #toggle-pass { position: absolute; right: 5px; top: 5px; padding: 5px; cursor: pointer; }
+
+  /* Responsive */
+  @media screen and (max-width: 600px){
+    .chord-card { width: 80px; }
+    #intro-screen input { width: 140px; }
+  }
 </style>
 </head>
 <body>
 <header>
   <div class="logo">Guitar Hub</div>
-  <button id="burger-btn">&#9776;</button>
-  <button id="dark-toggle" class="orange">Toggle Dark Mode</button>
-</header>
-
-<main>
-<!-- Intro / Login -->
-<div id="intro-screen">
-  <h1>Welcome to Guitar Hub Trainer</h1>
-  <input type="text" id="username" placeholder="Username"><br>
-  <div style="position:relative;display:inline-block;">
-    <input type="password" id="password" placeholder="Password">
-    <button id="toggle-pass" style="position:absolute;right:0;top:0;padding:5px;">👁️</button>
-  </div><br>
-  <button id="login-btn" class="orange">Log In</button>
-  <button id="create-acc-btn" class="orange">Create Account</button>
-  <button id="continue-btn" class="orange">Continue Without Account</button><br>
-  <button id="forgot-btn" class="orange">Forgot Password?</button>
-</div>
-
-<!-- Main Menu -->
-<div id="main-menu" class="hidden">
-  <h2>Main Menu</h2>
-  <div id="burger-hud" class="hidden">
-    Quiz Score: <span id="quiz-score-hud">0</span><br>
-    Accuracy: <span id="quiz-accuracy">0%</span>
-  </div>
-  <button id="view-chords-btn" class="orange">View Chords</button>
-  <button id="practice-btn" class="orange">Practice Chords</button>
-  <button id="strum-btn" class="orange">Practice Strum</button>
-  <button id="chord-quiz-btn" class="orange">Chord Recognition</button>
-  <button id="learn-song-btn" class="orange">Learn Song</button>
-</div>
-
-<!-- Chords -->
-<div id="chords" class="hidden">
-  <h2>Chords</h2>
-  <div class="chord-grid" id="chord-grid"></div>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<!-- Practice Chords -->
-<div id="practice" class="hidden">
-  <h2>Practice Chords</h2>
-  <div id="practice-display" style="font-size:2em;margin:15px;"></div>
-  <button id="next-practice" class="orange">Next</button>
-  <p id="practice-feedback"></p>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<script>
-// --- Global Variables ---
-let currentUser=null;
-let users=JSON.parse(localStorage.getItem("guitarUsers"))||{};
-const chords=["C","D","E","F","G","A","B","Am","Dm","Em"];
-
-// --- Helper Functions ---
-function goBack(){
-  document.getElementById("chords").classList.add("hidden");
-  document.getElementById("practice").classList.add("hidden");
-  document.getElementById("strum").classList.add("hidden");
-  document.getElementById("chord-quiz").classList.add("hidden");
-  document.getElementById("learn-song").classList.add("hidden");
-  document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Show/Hide Password ---
-document.getElementById("toggle-pass").onclick=()=>{
-  let p=document.getElementById("password");
-  p.type=p.type==="password"?"text":"password";
-};
-
-// --- Login / Create / Continue ---
-document.getElementById("login-btn").onclick=()=>{
-  let u=document.getElementById("username").value.trim();
-  let p=document.getElementById("password").value.trim();
-  if(!u||!p){alert("Enter username & password");return;}
-  if(users[u]&&users[u].password===p){currentUser=u; alert("Logged in!"); showMenu();}
-  else alert("Invalid credentials");
-};
-
-document.getElementById("create-acc-btn").onclick=()=>{
-  let u=document.getElementById("username").value.trim();
-  let p=document.getElementById("password").value.trim();
-  if(!u||!p){alert("Enter username & password");return;}
-  if(users[u]){alert("Username exists");return;}
-  users[u]={password:p,lastScore:0};
-  localStorage.setItem("guitarUsers",JSON.stringify(users));
-  currentUser=u; alert("Account created!"); showMenu();
-};
-
-document.getElementById("continue-btn").onclick=()=>{
-  currentUser="Guest"; showMenu();
-};
-
-document.getElementById("forgot-btn").onclick=()=>{
-  alert("Forgot Password feature coming soon!");
-};
-</script>
-<!-- Part 2/3: Strum Practice, Learn Song, Burger HUD, Images -->
-<!-- Strum Practice -->
-<div id="strum" class="hidden">
-  <h2>Strum Practice</h2>
-  <input type="text" id="song-search" placeholder="Search songs..." oninput="filterSongs()"><br>
-  <select id="song-select" onchange="updateSongPattern()"></select><br>
-  <p id="song-pattern"></p>
-  <button id="random-song" class="orange">Random Song</button>
-  <button id="play-guitar-sound" class="orange">Guitar Sound Test</button>
-  <p id="strum-feedback"></p>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<!-- Learn Song -->
-<div id="learn-song" class="hidden">
-  <h2>Learn Song</h2>
-  <p id="learn-song-name"></p>
-  <div id="learn-chords"></div>
-  <div id="learn-lyrics" style="white-space:pre-wrap;"></div>
-  <div id="learn-pattern"></div>
-  <iframe id="song-iframe" src=""></iframe>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<script>
-// --- Local chord images ---
-function populateChordGrid() {
-  const grid=document.getElementById("chord-grid");
-  grid.innerHTML="";
-  chords.forEach(c=>{
-    let div=document.createElement("div");
-    div.className="chord-card";
-    div.innerHTML=`<img src="image/${c.toLowerCase()}.png" alt="${c}"><br>${c}`;
-    grid.appendChild(div);
-  });
-}
-
-// --- Practice Chords ---
-document.getElementById("practice-btn").onclick=()=>{
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("practice").classList.remove("hidden");
-  nextPractice();
-};
-let practiceIndex=0;
-function nextPractice(){
-  practiceIndex=Math.floor(Math.random()*chords.length);
-  document.getElementById("practice-display").textContent=chords[practiceIndex];
-  document.getElementById("practice-feedback").textContent="";
-}
-document.getElementById("next-practice").onclick=nextPractice;
-
-// --- Strum Practice Setup ---
-const songs=[
-{name:"Anak",pattern:"D D U U D U",lyrics:`[Verse 1]
-C               G
-Anak, naku, anak
-Am              Em
-Kumain ka na ba?`,url:"https://www.songsterr.com/a/wa/song/44251"},
-{name:"Buwan",pattern:"D U D U D U",lyrics:`[Verse 1]
-F        C
-Buwan, buwan
-Dm       Bb
-Ikaw ang liwanag`,url:"https://www.songsterr.com/a/wa/song/123456"},
-{name:"Tadhana",pattern:"D D D D",lyrics:`[Verse 1]
-G      D
-Tadhana, ooh`,url:"https://www.songsterr.com/a/wa/song/654321"},
-{name:"Hawak Kamay",pattern:"U D U D U D",lyrics:`[Verse 1]
-C       G
-Hawak kamay`,url:"https://www.songsterr.com/a/wa/song/987654"},
-{name:"Ikaw",pattern:"D U U D U D",lyrics:`[Verse 1]
-Am       F
-Ikaw ang lahat`,url:"https://www.songsterr.com/a/wa/song/112233"},
-{name:"Tagpuan",pattern:"D D U D U",lyrics:`[Verse 1]
-Em      C
-Tagpuan`,url:"https://www.songsterr.com/a/wa/song/445566"},
-{name:"Kung Ako Na Lang Sana",pattern:"D D U D U D",lyrics:`[Verse 1]
-C       G
-Kung ako na lang sana`,url:"https://www.songsterr.com/a/wa/song/556677"},
-{name:"Huwag Ka Lang Mawawala",pattern:"U D U D",lyrics:`[Verse 1]
-Am       G
-Huwag ka lang mawawala`,url:"https://www.songsterr.com/a/wa/song/667788"},
-{name:"Pusong Ligaw",pattern:"D U D U",lyrics:`[Verse 1]
-C       G
-Pusong ligaw`,url:"https://www.songsterr.com/a/wa/song/778899"},
-{name:"Bakit Pa?",pattern:"D D U D",lyrics:`[Verse 1]
-F       C
-Bakit pa?`,url:"https://www.songsterr.com/a/wa/song/889900"},
-{name:"Mundo",pattern:"U D U D",lyrics:`[Verse 1]
-G       D
-Mundo`,url:"https://www.songsterr.com/a/wa/song/990011"},
-{name:"Sa’yo",pattern:"D D U D U",lyrics:`[Verse 1]
-C       G
-Sa'yo`,url:"https://www.songsterr.com/a/wa/song/101112"},
-{name:"Mahal Ko o Mahal Ako",pattern:"D U D U D U",lyrics:`[Verse 1]
-Am      F
-Mahal ko o mahal ako`,url:"https://www.songsterr.com/a/wa/song/121314"},
-{name:"Sana",pattern:"D D U U D U",lyrics:`[Verse 1]
-C       G
-Sana`,url:"https://www.songsterr.com/a/wa/song/131415"},
-{name:"Torete",pattern:"D U D U",lyrics:`[Verse 1]
-Em      C
-Torete`,url:"https://www.songsterr.com/a/wa/song/141516"},
-{name:"Hanggang Kailan",pattern:"D D U D",lyrics:`[Verse 1]
-G       D
-Hanggang kailan`,url:"https://www.songsterr.com/a/wa/song/151617"},
-{name:"Nadarang",pattern:"U D U D",lyrics:`[Verse 1]
-Am      F
-Nadarang`,url:"https://www.songsterr.com/a/wa/song/161718"},
-{name:"Paubaya",pattern:"D U D U D",lyrics:`[Verse 1]
-C       G
-Paubaya`,url:"https://www.songsterr.com/a/wa/song/171819"},
-{name:"Huling Sayaw",pattern:"D D U D",lyrics:`[Verse 1]
-Em      C
-Huling sayaw`,url:"https://www.songsterr.com/a/wa/song/192021"},
-{name:"Di Na Muli",pattern:"D U D U",lyrics:`[Verse 1]
-G       D
-Di na muli`,url:"https://www.songsterr.com/a/wa/song/202122"}
-];
-
-// --- Populate Song Select ---
-function populateSongSelect(){
-  const sel=document.getElementById("song-select");
-  sel.innerHTML="";
-  songs.forEach((s,i)=>{
-    let o=document.createElement("option");
-    o.value=i;
-    o.textContent=s.name;
-    o.setAttribute("data-pattern",s.pattern);
-    sel.appendChild(o);
-  });
-  updateSongPattern();
-}
-
-// --- Update Song Pattern ---
-function updateSongPattern(){
-  let idx=document.getElementById("song-select").value;
-  let song=songs[idx];
-  document.getElementById("song-pattern").textContent="Strum Pattern: "+song.pattern;
-}
-
-// --- Random Song ---
-document.getElementById("random-song").onclick=()=>{
-  let i=Math.floor(Math.random()*songs.length);
-  document.getElementById("song-select").value=i;
-  updateSongPattern();
-}
-
-// --- Filter Songs ---
-function filterSongs(){
-  let term=document.getElementById("song-search").value.toLowerCase();
-  const sel=document.getElementById("song-select");
-  sel.innerHTML="";
-  songs.filter(s=>s.name.toLowerCase().includes(term))
-       .forEach((s,i)=>{
-          let o=document.createElement("option");
-          o.value=i;
-          o.textContent=s.name;
-          o.setAttribute("data-pattern",s.pattern);
-          sel.appendChild(o);
-       });
-  updateSongPattern();
-}
-
-// --- Guitar Sound Test Placeholder ---
-document.getElementById("play-guitar-sound").onclick=()=>{
-  alert("Guitar sound test coming soon!");
-}
-
-// --- Learn Song ---
-document.getElementById("learn-song-btn").onclick=()=>{
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("learn-song").classList.remove("hidden");
-  let idx=document.getElementById("song-select").value;
-  let song=songs[idx];
-  document.getElementById("learn-song-name").textContent="Song: "+song.name;
-  document.getElementById("learn-chords").innerHTML="<pre>"+chords.join(" ")+"</pre>";
-  document.getElementById("learn-lyrics").textContent=song.lyrics;
-  document.getElementById("learn-pattern").textContent="Strum: "+song.pattern;
-  document.getElementById("song-iframe").src=song.url;
-}
-</script>
-<!-- PART 3: CHUNK 1 -->
-<div id="chord-quiz" class="hidden">
-  <h2>Chord Recognition Quiz</h2>
-  <div id="quiz-display" style="font-size:2em; margin:10px;"></div>
-  <div id="quiz-choices" class="chord-grid"></div>
-  <div id="quiz-score" style="margin-top:10px; font-weight:bold;"></div>
-  <button class="back-btn" onclick="goBack()">⬅ Back</button>
-</div>
-
-<!-- Burger HUD -->
-<div id="burger-hud" class="hidden" style="position:fixed; top:50px; right:0; background:orange; padding:10px; border-radius:8px; color:black; z-index:1000;">
-  <h4>HUD</h4>
-  <p>Quiz Score: <span id="hud-score">0</span></p>
-  <p>Accuracy: <span id="hud-accuracy">0%</span></p>
-</div>
-
-<!-- Dark Mode Toggle -->
-<button id="dark-toggle" style="position:fixed; bottom:20px; right:20px; padding:10px; border-radius:8px; background:#444; color:white;">Toggle Dark Mode</button>
-
-<script>
-// --- Dark Mode ---
-const darkToggle = document.getElementById("dark-toggle");
-darkToggle.onclick = () => {
-  document.body.classList.toggle("dark-mode");
-};
-
-// --- Chord Recognition Quiz ---
-const quizChords = ["C","D","E","F","G","A","B","Am","Dm","Em"];
-let quizScore = 0;
-let quizQuestions = 5;
-let currentQuestion = 0;
-
-function startQuiz() {
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("chord-quiz").classList.remove("hidden");
-  quizScore = 0;
-  currentQuestion = 0;
-  nextQuiz();
-}
-
-function nextQuiz() {
-  if (currentQuestion >= quizQuestions) {
-    document.getElementById("quiz-display").textContent = "Quiz Complete!";
-    document.getElementById("quiz-choices").innerHTML = "";
-    updateHUD();
-    return;
-  }
-  const correctChord = quizChords[Math.floor(Math.random()*quizChords.length)];
-  document.getElementById("quiz-display").textContent = correctChord;
-
-  let choices = new Set([correctChord]);
-  while (choices.size < 4) choices.add(quizChords[Math.floor(Math.random()*quizChords.length)]);
-  const shuffled = [...choices].sort(() => Math.random() - 0.5);
-
-  const container = document.getElementById("quiz-choices");
-  container.innerHTML = "";
-  shuffled.forEach(c => {
-    const btn = document.createElement("button");
-    btn.textContent = c;
-    btn.onclick = () => {
-      if(c === correctChord) quizScore++;
-      currentQuestion++;
-      nextQuiz();
-      updateHUD();
-    };
-    container.appendChild(btn);
-  });
-}
-
-function updateHUD() {
-  document.getElementById("hud-score").textContent = quizScore;
-  const acc = ((quizScore/currentQuestion)||0)*100;
-  document.getElementById("hud-accuracy").textContent = Math.round(acc)+"%";
-}
-</script>
-<!-- Part 3.2: Strum Practice & Learn Song continued -->
-<div id="strum" class="hidden">
-  <h2>Strum Practice</h2>
-  <input type="text" id="song-search" placeholder="Search songs..." oninput="filterSongs()" style="width:90%; max-width:400px;"><br>
-  <select id="song-select" onchange="updateSongPattern()" style="width:90%; max-width:400px;"></select><br>
-  <p id="song-pattern"></p>
-  <button id="random-song" class="orange">Random Song</button>
-  <button id="play-guitar-sound" class="orange">Guitar Sound Test</button>
-  <p id="strum-feedback"></p>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<div id="learn-song" class="hidden">
-  <h2>Learn Song</h2>
-  <p id="learn-song-name"></p>
-  <div id="learn-chords" style="white-space: pre-wrap;"></div>
-  <div id="learn-lyrics" style="white-space: pre-wrap;"></div>
-  <div id="learn-pattern"></div>
-  <iframe id="song-iframe" src="" style="width:100%; height:400px;"></iframe>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<script>
-// --- Songs array (20 Filipino songs, full lyrics example) ---
-const songs=[
-  {name:"Anak",pattern:"D D U U D U",lyrics:`[Verse 1]
-C               G
-Anak, naku, anak
-Am              Em
-Kumain ka na ba?
-C              G
-Laging nag-iisa
-Am            Em
-Tinitingnan ang mundo`,url:"https://www.songsterr.com/a/wa/song/44251"},
-
-  {name:"Buwan",pattern:"D U D U D U",lyrics:`[Verse 1]
-F        C
-Buwan, buwan
-Dm       Bb
-Ikaw ang liwanag
-F          C
-Sa aking dilim
-Dm       Bb
-Gabay sa aking landasin
-[Chorus]
-F        C
-Buwan, buwan
-Dm       Bb
-Haplos mo'y damhin
-F        C
-Buwan, buwan
-Dm       Bb
-Sa langit sumulyap`,url:"https://www.songsterr.com/a/wa/song/123456"},
-
-  {name:"Tadhana",pattern:"D D D D",lyrics:`[Verse 1]
-G      D
-Tadhana, ooh
-G      D
-Ikaw ang dahilan
-Em     C
-Ng aking paghinga
-G      D
-Ikaw ang tadhana
-[Chorus]
-G      D
-Tadhana, oh tadhana
-Em     C
-Hawak kamay tayo`,url:"https://www.songsterr.com/a/wa/song/654321"},
-
-  {name:"Hawak Kamay",pattern:"U D U D U D",lyrics:`[Verse 1]
-C       G
-Hawak kamay
-Am      Em
-Kaibigan sa hirap
-C       G
-Tangan ang pangako
-Am      Em
-Hindi ka nag-iisa
-[Chorus]
-C       G
-Hawak kamay
-Am      Em
-Sa bawat laban`,url:"https://www.songsterr.com/a/wa/song/987654"},
-
-  {name:"Ikaw",pattern:"D U U D U D",lyrics:`[Verse 1]
-Am       F
-Ikaw ang lahat
-C        G
-Sa bawat sandali
-Am       F
-Ikaw ang laman
-C        G
-Ng aking damdamin
-[Chorus]
-Am       F
-Ikaw, ikaw
-C        G
-Sa puso ko`,url:"https://www.songsterr.com/a/wa/song/112233"},
-
-  {name:"Tagpuan",pattern:"D D U D U",lyrics:`[Verse 1]
-Em      C
-Tagpuan
-G       D
-Sa ilalim ng buwan
-Em      C
-Pangarap na tahimik
-G       D
-Na sa huli'y nagtagpo
-[Chorus]
-Em      C
-Tagpuan, tagpuan
-G       D
-Hawak kamay`,url:"https://www.songsterr.com/a/wa/song/445566"},
-
-  {name:"Kung Ako Na Lang Sana",pattern:"D D U D U D",lyrics:`[Verse 1]
-C       G
-Kung ako na lang sana
-Am      Em
-Maaari bang bumalik
-C       G
-Sa nakaraan
-Am      Em
-Ang lahat ng oras`,url:"https://www.songsterr.com/a/wa/song/556677"},
-
-  {name:"Huwag Ka Lang Mawawala",pattern:"U D U D",lyrics:`[Verse 1]
-Am       G
-Huwag ka lang mawawala
-C        F
-Nandito ako sa tabi mo
-Am       G
-Sa bawat luha`,url:"https://www.songsterr.com/a/wa/song/667788"},
-
-  {name:"Pusong Ligaw",pattern:"D U D U",lyrics:`[Verse 1]
-C       G
-Pusong ligaw
-Am      F
-Laging nag-iisa
-C       G
-Ngunit sa huli
-Am      F
-Makikita ang tunay na pag-ibig`,url:"https://www.songsterr.com/a/wa/song/778899"},
-
-  {name:"Bakit Pa?",pattern:"D D U D",lyrics:`[Verse 1]
-F       C
-Bakit pa?
-Dm      Bb
-Hinintay ang sagot
-F       C
-Sa bawat tanong
-Dm      Bb
-Sa bawat pangarap`,url:"https://www.songsterr.com/a/wa/song/889900"},
-
-  {name:"Mundo",pattern:"U D U D",lyrics:`[Verse 1]
-G       D
-Mundo
-Em      C
-Sa paligid ko
-G       D
-Ngunit ika'y di nariyan
-Em      C
-Hanggang kailan`,url:"https://www.songsterr.com/a/wa/song/990011"},
-
-  {name:"Sa’yo",pattern:"D D U D U",lyrics:`[Verse 1]
-C       G
-Sa'yo
-Am      F
-Ang lahat ng pangarap
-C       G
-Sa bawat sandali
-Am      F
-Ikaw ang laman ng puso`,url:"https://www.songsterr.com/a/wa/song/101112"},
-
-  {name:"Mahal Ko o Mahal Ako",pattern:"D U D U D U",lyrics:`[Verse 1]
-Am      F
-Mahal ko o mahal ako
-C       G
-Sa bawat tawa at luha
-Am      F
-Ikaw ang laman ng puso`,url:"https://www.songsterr.com/a/wa/song/121314"},
-
-  {name:"Sana",pattern:"D D U U D U",lyrics:`[Verse 1]
-C       G
-Sana
-Am      F
-Ang bawat pangarap
-C       G
-Ay matupad
-Am      F
-Sa piling mo`,url:"https://www.songsterr.com/a/wa/song/131415"},
-
-  {name:"Torete",pattern:"D U D U",lyrics:`[Verse 1]
-Em      C
-Torete
-G       D
-Sa bawat tibok ng puso
-Em      C
-Ngunit ika'y wala`,url:"https://www.songsterr.com/a/wa/song/141516"},
-
-  {name:"Hanggang Kailan",pattern:"D D U D",lyrics:`[Verse 1]
-G       D
-Hanggang kailan
-Em      C
-Ako’y naghihintay
-G       D
-Bukas o ngayon`,url:"https://www.songsterr.com/a/wa/song/151617"},
-
-  {name:"Nadarang",pattern:"U D U D",lyrics:`[Verse 1]
-Am      F
-Nadarang
-C       G
-Sa bawat pag-ikot ng mundo
-Am      F
-Ngunit ika'y naglaho`,url:"https://www.songsterr.com/a/wa/song/161718"},
-
-  {name:"Paubaya",pattern:"D U D U D",lyrics:`[Verse 1]
-C       G
-Paubaya
-Am      F
-Ibigay ang lahat
-C       G
-Sa huling sandali`,url:"https://www.songsterr.com/a/wa/song/171819"},
-
-  {name:"Huling Sayaw",pattern:"D D U D",lyrics:`[Verse 1]
-Em      C
-Huling sayaw
-G       D
-Sa bawat galaw ng katawan
-Em      C
-Hanggang huli`,url:"https://www.songsterr.com/a/wa/song/192021"},
-
-  {name:"Di Na Muli",pattern:"D U D U",lyrics:`[Verse 1]
-G       D
-Di na muli
-Em      C
-Sa bawat alaala
-G       D
-Ngunit ika'y wala`,url:"https://www.songsterr.com/a/wa/song/202122"}
-];
-
-// --- Populate Song Select ---
-function populateSongSelect(){
-  const sel=document.getElementById("song-select");
-  sel.innerHTML="";
-  songs.forEach((s,i)=>{
-    let o=document.createElement("option");
-    o.value=i;
-    o.textContent=s.name;
-    o.setAttribute("data-pattern",s.pattern);
-    sel.appendChild(o);
-  });
-  updateSongPattern();
-}
-
-// --- Update Song Pattern ---
-function updateSongPattern(){
-  let idx=parseInt(document.getElementById("song-select").value);
-  let song=songs[idx];
-  document.getElementById("song-pattern").textContent="Strum Pattern: "+song.pattern;
-}
-
-// --- Random Song ---
-document.getElementById("random-song").onclick=()=>{
-  let i=Math.floor(Math.random()*songs.length);
-  document.getElementById("song-select").value=i;
-  updateSongPattern();
-}
-
-// --- Filter Songs ---
-function filterSongs(){
-  let term=document.getElementById("song-search").value.toLowerCase();
-  const sel=document.getElementById("song-select");
-  sel.innerHTML="";
-  songs.forEach((s, i) => {
-    if(s.name.toLowerCase().includes(term)){
-      let o=document.createElement("option");
-      o.value=i;
-      o.textContent=s.name;
-      o.setAttribute("data-pattern", s.pattern);
-      sel.appendChild(o);
-    }
-  });
-  updateSongPattern();
-}
-
-// --- Guitar Sound Test Placeholder ---
-document.getElementById("play-guitar-sound").onclick=()=>{
-  alert("Guitar sound test coming soon!");
-}
-
-// --- Learn Song ---
-document.getElementById("learn-song-btn").onclick=()=>{
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("learn-song").classList.remove("hidden");
-  let idx=parseInt(document.getElementById("song-select").value);
-  let song=songs[idx];
-  document.getElementById("learn-song-name").textContent="Song: "+song.name;
-  document.getElementById("learn-chords").innerHTML="<pre>"+chords.join(" ")+"</pre>";
-  document.getElementById("learn-lyrics").textContent=song.lyrics;
-  document.getElementById("learn-pattern").textContent="Strum: "+song.pattern;
-  document.getElementById("song-iframe").src=song.url;
-   }<!-- Part 3.3: Debugged Strum Practice & Learn Song -->
-<!-- Strum Practice -->
-<div id="strum" class="hidden" style="padding:10px; display:flex; flex-direction:column; align-items:center;">
-  <h2>Strum Practice</h2>
-  <input type="text" id="song-search" placeholder="Search songs..." style="width:90%; max-width:400px; margin:5px 0;" oninput="filterSongs()">
-  <select id="song-select" style="width:90%; max-width:400px; margin:5px 0;" onchange="updateSongPattern()"></select>
-  <p id="song-pattern" style="margin:5px 0;"></p>
-  <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:5px 0;">
-    <button id="random-song" class="orange" style="flex:1; min-width:120px;">Random Song</button>
-    <button id="play-guitar-sound" class="orange" style="flex:1; min-width:120px;">Guitar Sound Test</button>
-  </div>
-  <p id="strum-feedback"></p>
-  <button onclick="goBack()" class="orange" style="margin-top:10px;">⬅ Back</button>
-</div>
-
-<!-- Learn Song -->
-<div id="learn-song" class="hidden" style="padding:10px; display:flex; flex-direction:column; align-items:center;">
-  <h2>Learn Song</h2>
-  <p id="learn-song-name" style="font-weight:bold; margin:5px 0;"></p>
-  <div id="learn-chords" style="margin:5px 0;"></div>
-  <div id="learn-lyrics" style="white-space:pre-wrap; text-align:left; width:90%; max-width:500px; margin:5px 0;"></div>
-  <div id="learn-pattern" style="margin:5px 0;"></div>
-  <iframe id="song-iframe" src="" style="width:90%; max-width:500px; height:auto; max-height:50vh; margin:10px 0;"></iframe>
-  <button onclick="goBack()" class="orange" style="margin-top:10px;">⬅ Back</button>
-</div>
-
-<script>
-// --- Populate song select ---
-function populateSongSelect(){
-  const sel = document.getElementById("song-select");
-  sel.innerHTML = "";
-  songs.forEach((s,i)=>{
-    let o = document.createElement("option");
-    o.value = i;
-    o.textContent = s.name;
-    o.setAttribute("data-pattern", s.pattern);
-    sel.appendChild(o);
-  });
-  updateSongPattern();
-  }
-  
-  
-// --- Update song pattern ---
-function updateSongPattern(){
-  let idx = document.getElementById("song-select").value;
-  let song = songs[idx];
-  document.getElementById("song-pattern").textContent = "Strum Pattern: " + song.pattern;
-}
-
-// --- Random song ---
-document.getElementById("random-song").onclick = () => {
-  let i = Math.floor(Math.random()*songs.length);
-  document.getElementById("song-select").value = i;
-  updateSongPattern();
-}
-
-// --- Filter songs ---
-function filterSongs(){
-  let term = document.getElementById("song-search").value.toLowerCase();
-  const sel = document.getElementById("song-select");
-  sel.innerHTML = "";
-  songs.filter(s => s.name.toLowerCase().includes(term))
-       .forEach((s,i)=>{
-         let o = document.createElement("option");
-         o.value = i;
-         o.textContent = s.name;
-         o.setAttribute("data-pattern", s.pattern);
-         sel.appendChild(o);
-       });
-  updateSongPattern();
-}
-
-// --- Guitar Sound Test ---
-document.getElementById("play-guitar-sound").onclick = () => {
-  alert("Guitar sound test coming soon!");
-}
-
-// --- Learn Song ---
-document.getElementById("learn-song-btn").onclick = () => {
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("learn-song").classList.remove("hidden");
-  let idx = document.getElementById("song-select").value;
-  let song = songs[idx];
-  document.getElementById("learn-song-name").textContent = "Song: " + song.name;
-  document.getElementById("learn-chords").innerHTML = "<pre>" + chords.join(" ") + "</pre>";
-  document.getElementById("learn-lyrics").textContent = song.lyrics;
-  document.getElementById("learn-pattern").textContent = "Strum: " + song.pattern;
-  document.getElementById("song-iframe").src = song.url;
-}
-</script>
-<style>
-/* Part 3.4: Responsive fixes */
-@media screen and (max-width: 360px) {
-  body { font-size: 14px; padding: 5px; }
-  input, select, button { width: 90%; font-size: 0.9em; }
-  #learn-lyrics, #learn-chords, #learn-pattern {
-    font-size: 0.9em;
-  }
-  iframe { height: 250px; }
-}
-#learn-lyrics, #learn-chords, #learn-pattern {
-  max-height: 300px;
-  overflow-y: auto;
-}
-</style>
-<script>
-// Part 3.4 fixes
-
-// --- Filtered song select fix ---
-function updateSongPattern(){
-  let sel=document.getElementById("song-select");
-  if(sel.options.length===0) return;
-  let idx = sel.selectedOptions[0].getAttribute('data-idx');
-  let song = songs[idx];
-  document.getElementById("song-pattern").textContent="Strum Pattern: "+song.pattern;
-}
-
-// --- Learn Song fix ---
-document.getElementById("learn-song-btn").onclick = ()=>{
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("learn-song").classList.remove("hidden");
-  let sel = document.getElementById("song-select");
-  if(sel.options.length===0) return;
-  let idx = sel.selectedOptions[0].getAttribute('data-idx');
-  let song = songs[idx];
-  document.getElementById("learn-song-name").textContent = "Song: "+song.name;
-  document.getElementById("learn-chords").innerHTML = "<pre>"+chords.join(" ")+"</pre>";
-  document.getElementById("learn-lyrics").textContent = song.lyrics;
-  document.getElementById("learn-pattern").textContent = "Strum: "+song.pattern;
-  document.getElementById("song-iframe").src = song.url;
-}
-
-// --- Empty songs guard ---
-function populateSongSelect(){
-  const sel = document.getElementById("song-select");
-  sel.innerHTML="";
-  if(songs.length===0) {
-    let o = document.createElement("option");
-    o.textContent = "No songs available";
-    sel.appendChild(o);
-    document.getElementById("song-pattern").textContent = "";
-    return;
-  }
-  songs.forEach((s,i)=>{
-    let o=document.createElement("option");
-    o.value=i;
-    o.textContent=s.name;
-    o.setAttribute("data-pattern",s.pattern);
-    o.setAttribute("data-idx",i); // Store original index
-    sel.appendChild(o);
-  });
-  updateSongPattern();
-}
-</script>
-
-  <!-- Part 3.5: Chord Quiz Images, Accuracy, Dark Mode, HUD, Guitar Sound Test -->
-<!-- Chord Recognition / Quiz -->
-<div id="chord-quiz" class="hidden">
-  <h2>Chord Recognition Practice</h2>
-  <div id="quiz-hud">
-    <span>Quiz Score: <span id="quiz-score">0</span></span> |
-    <span>Accuracy: <span id="quiz-accuracy">0%</span></span>
-  </div>
-  <div id="quiz-chord-display"></div>
-  <div id="quiz-choices" class="chord-grid"></div>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<!-- Dark Mode -->
-<button id="dark-toggle" class="orange">Toggle Dark Mode</button>
-
-<script>
-// --- Chord Quiz Variables ---
-let quizScore = 0;
-let quizTotal = 10;
-let quizCorrect = 0;
-
-// --- Start Quiz ---
-document.getElementById("chord-quiz-btn").onclick = () => {
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("chord-quiz").classList.remove("hidden");
-  quizScore = 0;
-  quizCorrect = 0;
-  nextQuiz();
-};
-
-// --- Next Quiz Question ---
-function nextQuiz() {
-  if (quizScore >= quizTotal) {
-    document.getElementById("quiz-chord-display").textContent =
-      "Quiz Complete! Score: " + quizCorrect + "/" + quizTotal;
-    document.getElementById("quiz-choices").innerHTML = "";
-    document.getElementById("quiz-accuracy").textContent =
-      Math.round((quizCorrect / quizTotal) * 100) + "%";
-    return;
-  }
-
-  const correctChord = chords[Math.floor(Math.random() * chords.length)];
-  const displayDiv = document.getElementById("quiz-chord-display");
-  displayDiv.innerHTML = `<img src="image/${correctChord.toLowerCase()}.png" alt="${correctChord}">`;
-
-  let choicesSet = new Set([correctChord]);
-  while (choicesSet.size < 4) {
-    choicesSet.add(chords[Math.floor(Math.random() * chords.length)]);
-  }
-
-  const shuffled = [...choicesSet].sort(() => Math.random() - 0.5);
-  const container = document.getElementById("quiz-choices");
-  container.innerHTML = "";
-
-  shuffled.forEach(c => {
-    const btn = document.createElement("button");
-    btn.textContent = c;
-    btn.onclick = () => {
-      if (c === correctChord) quizCorrect++;
-      quizScore++;
-      document.getElementById("quiz-score").textContent = quizScore;
-      document.getElementById("quiz-accuracy").textContent =
-        Math.round((quizCorrect / quizScore) * 100) + "%";
-      nextQuiz();
-    };
-    container.appendChild(btn);
-  });
-}
-
-// --- Dark Mode Toggle ---
-document.getElementById("dark-toggle").onclick = () => {
-  document.body.classList.toggle("dark-mode");
-};
-
-// --- Guitar Sound Test ---
-document.getElementById("play-guitar-sound").onclick = () => {
-  const audio = new Audio("audio/guitar-strum.mp3"); // Placeholder, ensure file exists
-  audio.play();
-};
-</script>
-
-  <!-- Part 3.6: Login Screen, Main Menu, Chord Grid -->
-<div id="intro-screen">
-  <h1 style="color:orange;">Welcome to Guitar Hub</h1>
-  <input type="text" id="username" placeholder="Username"><br>
-  <div style="position:relative;display:inline-block;">
-    <input type="password" id="password" placeholder="Password">
-    <button id="toggle-pass" style="position:absolute;right:0;top:0;padding:5px;">👁️</button>
-  </div><br>
-  <button id="login-btn" class="orange">Log In</button>
-  <button id="create-acc-btn" class="orange">Create Account</button>
-  <button id="continue-btn" class="orange">Continue Without Account</button>
-  <p><a href="#" id="forgot-pass" style="color:white;">Forgot Password?</a></p>
-</div>
-
-<div id="main-menu" class="hidden">
-  <h2 style="color:orange;">Main Menu</h2>
-  <button id="view-chords-btn" class="orange">View Chords</button>
-  <button id="practice-btn" class="orange">Practice Chords</button>
-  <button id="strum-btn" class="orange">Practice Strum</button>
-  <button id="chord-quiz-btn" class="orange">Chord Recognition</button>
-  <button id="learn-song-btn" class="orange">Learn Song</button>
-</div>
-
-<div id="chords" class="hidden">
-  <h2 style="color:orange;">Chords</h2>
-  <div class="chord-grid" id="chord-grid"></div>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<script>
-// --- Global Variables ---
-let currentUser = null;
-let users = JSON.parse(localStorage.getItem("guitarUsers")) || {};
-const chords = ["C","D","E","F","G","A","B","Am","Dm","Em"];
-
-// --- Helpers ---
-function goBack(){
-  document.getElementById("intro-screen").classList.add("hidden");
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("chords").classList.add("hidden");
-  document.getElementById("practice").classList.add("hidden");
-  document.getElementById("strum").classList.add("hidden");
-  document.getElementById("chord-quiz").classList.add("hidden");
-  document.getElementById("learn-song").classList.add("hidden");
-  document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Show/Hide Password ---
-document.getElementById("toggle-pass").onclick = () => {
-  let p = document.getElementById("password");
-  p.type = p.type === "password" ? "text" : "password";
-}
-
-// --- Login ---
-document.getElementById("login-btn").onclick = () => {
-  let u = document.getElementById("username").value.trim();
-  let p = document.getElementById("password").value.trim();
-  if(!u || !p){alert("Enter username & password"); return;}
-  if(users[u] && users[u].password === p){
-    currentUser = u; 
-    alert("Logged in");
-    showMenu();
-  } else alert("Invalid credentials");
-};
-
-// --- Create Account ---
-document.getElementById("create-acc-btn").onclick = () => {
-  let u = document.getElementById("username").value.trim();
-  let p = document.getElementById("password").value.trim();
-  if(!u || !p){alert("Enter username & password"); return;}
-  if(users[u]){alert("Username already exists"); return;}
-  users[u] = {password:p, lastScore:0};
-  localStorage.setItem("guitarUsers", JSON.stringify(users));
-  currentUser = u;
-  alert("Account Created");
-  showMenu();
-};
-
-// --- Continue Without Account ---
-document.getElementById("continue-btn").onclick = () => {
-  currentUser = "Guest";
-  showMenu();
-};
-
-// --- Forgot Password ---
-document.getElementById("forgot-pass").onclick = () => {
-  alert("Forgot password functionality coming soon!");
-}
-
-// --- Show Menu ---
-function showMenu(){
-  document.getElementById("intro-screen").classList.add("hidden");
-  document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Populate Chord Grid ---
-function populateChordGrid(){
-  const grid = document.getElementById("chord-grid");
-  grid.innerHTML = "";
-  chords.forEach(c=>{
-    let div = document.createElement("div");
-    div.className = "chord-card";
-    div.innerHTML = `<img src="image/${c.toLowerCase()}.png" alt="${c}"><br>${c}`;
-    grid.appendChild(div);
-  });
-}
-
-// --- View Chords ---
-document.getElementById("view-chords-btn").onclick = () => {
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("chords").classList.remove("hidden");
-  populateChordGrid();
-}
-</script>
-
-  <!-- Part 3.7.1: Practice Chords + Strum Practice Setup -->
-<!-- Practice Chords -->
-<div id="practice" class="hidden">
-  <h2>Practice Chords</h2>
-  <div id="practice-display" style="font-size:2em;"></div>
-  <button id="next-practice" class="orange">Next</button>
-  <p id="practice-feedback"></p>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<!-- Strum Practice -->
-<div id="strum" class="hidden">
-  <h2>Strum Practice</h2>
-  <input type="text" id="song-search" placeholder="Search songs..." oninput="filterSongs()"><br>
-  <select id="song-select" onchange="updateSongPattern()"></select><br>
-  <p id="song-pattern"></p>
-  <button id="random-song" class="orange">Random Song</button>
-  <button id="play-guitar-sound" class="orange">Guitar Sound Test</button>
-  <p id="strum-feedback"></p>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<script>
-// --- Practice Chords ---
-let practiceIndex = 0;
-document.getElementById("practice-btn").onclick = () => {
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("practice").classList.remove("hidden");
-  nextPractice();
-};
-function nextPractice() {
-  practiceIndex = Math.floor(Math.random() * chords.length);
-  document.getElementById("practice-display").textContent = chords[practiceIndex];
-  document.getElementById("practice-feedback").textContent = "";
-}
-document.getElementById("next-practice").onclick = nextPractice;
-
-// --- Song List (20 Filipino Songs) ---
-const songs = [
-  {name:"Anak", pattern:"D D U U D U", lyrics:`[Verse 1]\nC               G\nAnak, naku, anak\nAm              Em\nKumain ka na ba?\n[Verse 2]\nC               G\nPagkat minsan tayo ay nagkakamali\nAm              Em\nPero di dapat mawalan ng pag-asa`, url:"https://www.songsterr.com/a/wa/song/44251"},
-  {name:"Buwan", pattern:"D U D U D U", lyrics:`[Verse 1]\nF        C\nBuwan, buwan\nDm       Bb\nIkaw ang liwanag\n[Chorus]\nF          C\nBuwan, sulyap ng pag-ibig`, url:"https://www.songsterr.com/a/wa/song/123456"},
-  {name:"Tadhana", pattern:"D D D D", lyrics:`[Verse 1]\nG      D\nTadhana, ooh\n[Verse 2]\nG      D\nParang sulyap lang ng mata mo\n[Chorus]\nG      D\nTadhana, ikaw ang aking mahal`, url:"https://www.songsterr.com/a/wa/song/654321"},
-  {name:"Hawak Kamay", pattern:"U D U D U D", lyrics:`[Verse 1]\nC       G\nHawak kamay\nAm      Em\nTiwala lang`, url:"https://www.songsterr.com/a/wa/song/987654"},
-  {name:"Ikaw", pattern:"D U U D U D", lyrics:`[Verse 1]\nAm       F\nIkaw ang lahat\n[Verse 2]\nAm       F\nIkaw ang pag-ibig na wagas`, url:"https://www.songsterr.com/a/wa/song/112233"},
-  {name:"Tagpuan", pattern:"D D U D U", lyrics:`[Verse 1]\nEm      C\nTagpuan\n[Chorus]\nEm      C\nSa huli ay tayo`, url:"https://www.songsterr.com/a/wa/song/445566"},
-  {name:"Kung Ako Na Lang Sana", pattern:"D D U D U D", lyrics:`[Verse 1]\nC       G\nKung ako na lang sana\n[Verse 2]\nC       G\nNang malaman mo ang totoo`, url:"https://www.songsterr.com/a/wa/song/556677"},
-  {name:"Huwag Ka Lang Mawawala", pattern:"U D U D", lyrics:`[Verse 1]\nAm       G\nHuwag ka lang mawawala\n[Chorus]\nAm       G\nDahil sa akin`, url:"https://www.songsterr.com/a/wa/song/667788"},
-  {name:"Pusong Ligaw", pattern:"D U D U", lyrics:`[Verse 1]\nC       G\nPusong ligaw\n[Chorus]\nC       G\nNahulog sa iyo`, url:"https://www.songsterr.com/a/wa/song/778899"},
-  {name:"Bakit Pa?", pattern:"D D U D", lyrics:`[Verse 1]\nF       C\nBakit pa?\n[Verse 2]\nF       C\nHindi ko maintindihan`, url:"https://www.songsterr.com/a/wa/song/889900"},
-  {name:"Mundo", pattern:"U D U D", lyrics:`[Verse 1]\nG       D\nMundo\n[Chorus]\nG       D\nIkaw lang ang aking iniintindi`, url:"https://www.songsterr.com/a/wa/song/990011"},
-  {name:"Sa’yo", pattern:"D D U D U", lyrics:`[Verse 1]\nC       G\nSa'yo\n[Chorus]\nC       G\nAng lahat`, url:"https://www.songsterr.com/a/wa/song/101112"},
-  {name:"Mahal Ko o Mahal Ako", pattern:"D U D U D U", lyrics:`[Verse 1]\nAm      F\nMahal ko o mahal ako\n[Chorus]\nAm      F\nSino ang mamahalin?`, url:"https://www.songsterr.com/a/wa/song/121314"},
-  {name:"Sana", pattern:"D D U U D U", lyrics:`[Verse 1]\nC       G\nSana\n[Chorus]\nC       G\nAy hindi na magwakas`, url:"https://www.songsterr.com/a/wa/song/131415"},
-  {name:"Torete", pattern:"D U D U", lyrics:`[Verse 1]\nEm      C\nTorete\n[Chorus]\nEm      C\nParang baliw`, url:"https://www.songsterr.com/a/wa/song/141516"},
-  {name:"Hanggang Kailan", pattern:"D D U D", lyrics:`[Verse 1]\nG       D\nHanggang kailan\n[Chorus]\nG       D\nMakakalimot na ba?`, url:"https://www.songsterr.com/a/wa/song/151617"},
-  {name:"Nadarang", pattern:"U D U D", lyrics:`[Verse 1]\nAm      F\nNadarang\n[Chorus]\nAm      F\nSa iyong pag-ibig`, url:"https://www.songsterr.com/a/wa/song/161718"},
-  {name:"Paubaya", pattern:"D U D U D", lyrics:`[Verse 1]\nC       G\nPaubaya\n[Chorus]\nC       G\nAng lahat`, url:"https://www.songsterr.com/a/wa/song/171819"},
-  {name:"Huling Sayaw", pattern:"D D U D", lyrics:`[Verse 1]\nEm      C\nHuling sayaw\n[Chorus]\nEm      C\nSa ilalim ng buwan`, url:"https://www.songsterr.com/a/wa/song/192021"},
-  {name:"Di Na Muli", pattern:"D U D U", lyrics:`[Verse 1]\nG       D\nDi na muli\n[Chorus]\nG       D\nSa aking piling`, url:"https://www.songsterr.com/a/wa/song/202122"}
-];
-
-// --- Populate Song Select ---
-function populateSongSelect(){
-  const sel=document.getElementById("song-select");
-  sel.innerHTML="";
-  songs.forEach((s,i)=>{
-    let o=document.createElement("option");
-    o.value=i;
-    o.textContent=s.name;
-    o.setAttribute("data-pattern",s.pattern);
-    sel.appendChild(o);
-  });
-  updateSongPattern();
-}
-
-// --- Update Song Pattern ---
-function updateSongPattern(){
-  let idx=document.getElementById("song-select").value;
-  let song=songs[idx];
-  document.getElementById("song-pattern").textContent="Strum Pattern: "+song.pattern;
-}
-
-// --- Random Song ---
-document.getElementById("random-song").onclick=()=>{
-  let i=Math.floor(Math.random()*songs.length);
-  document.getElementById("song-select").value=i;
-  updateSongPattern();
-}
-
-// --- Filter Songs ---
-function filterSongs(){
-  let term=document.getElementById("song-search").value.toLowerCase();
-  const sel=document.getElementById("song-select");
-  sel.innerHTML="";
-  songs.filter(s=>s.name.toLowerCase().includes(term))
-       .forEach((s,i)=>{
-          let o=document.createElement("option");
-          o.value=i;
-          o.textContent=s.name;
-          o.setAttribute("data-pattern",s.pattern);
-          sel.appendChild(o);
-       });
-  updateSongPattern();
-}
-
-// --- Guitar Sound Test ---
-document.getElementById("play-guitar-sound").onclick=()=>{
-  alert("Guitar sound test coming soon!");
-}
-</script>
-
-  <!-- Part 3.7.2: Learn Song, Strum Practice, Chord Quiz Fixes -->
-<!-- Strum Practice -->
-<div id="strum" class="hidden">
-  <h2>Strum Practice</h2>
-  <input type="text" id="song-search" placeholder="Search Philippine songs..." oninput="filterSongs()"><br>
-  <select id="song-select" onchange="updateSongPattern()"></select><br>
-  <p id="song-pattern"></p>
-  <button id="random-song" class="orange">Random Song</button>
-  <button id="play-guitar-sound" class="orange">Guitar Sound Test</button>
-  <p id="strum-feedback"></p>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<!-- Learn Song -->
-<div id="learn-song" class="hidden">
-  <h2>Learn Song</h2>
-  <p id="learn-song-name"></p>
-  <div id="learn-chords"></div>
-  <div id="learn-lyrics" style="white-space:pre-wrap;"></div>
-  <div id="learn-pattern"></div>
-  <iframe id="song-iframe" src=""></iframe>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<!-- Chord Quiz -->
-<div id="chord-quiz" class="hidden">
-  <h2>Chord Recognition</h2>
-  <div id="quiz-display"></div>
-  <div id="quiz-choices" class="chord-grid"></div>
-  <div id="quiz-timer">Time: <span id="time-left">5</span>s</div>
-  <div id="quiz-score">Score: 0 / 0</div>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<script>
-// --- Populate Local Chord Images ---
-function populateChordGrid() {
-  const grid=document.getElementById("chord-grid");
-  grid.innerHTML="";
-  chords.forEach(c=>{
-    let div=document.createElement("div");
-    div.className="chord-card";
-    div.innerHTML=`<img src="image/${c.toLowerCase()}.png" alt="${c}"><br>${c}`;
-    grid.appendChild(div);
-  });
-}
-
-// --- Practice Chords ---
-document.getElementById("practice-btn").onclick=()=>{
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("practice").classList.remove("hidden");
-  nextPractice();
-};
-let practiceIndex=0;
-function nextPractice(){
-  practiceIndex=Math.floor(Math.random()*chords.length);
-  document.getElementById("practice-display").textContent=chords[practiceIndex];
-  document.getElementById("practice-feedback").textContent="";
-}
-document.getElementById("next-practice").onclick=nextPractice;
-
-// --- Songs Array with Full Lyrics ---
-const songs=[
-{name:"Anak",pattern:"D D U U D U",lyrics:`[Verse 1]
-C               G
-Anak, naku, anak
-Am              Em
-Kumain ka na ba?
-
-[Chorus]
-C       G
-Anak, mahal kita
-Am      Em
-Patawad sa lahat`,url:"https://www.songsterr.com/a/wa/song/44251"},
-{name:"Buwan",pattern:"D U D U D U",lyrics:`[Verse 1]
-F        C
-Buwan, buwan
-Dm       Bb
-Ikaw ang liwanag
-
-[Chorus]
-F      C
-Buwan, ikaw ang gabay
-Dm      Bb
-Sa dilim ng buhay`,url:"https://www.songsterr.com/a/wa/song/123456"},
-{name:"Tadhana",pattern:"D D D D",lyrics:`[Verse 1]
-G      D
-Tadhana, ooh
-
-[Chorus]
-G        D
-Tadhana, sadyang tayo`,url:"https://www.songsterr.com/a/wa/song/654321"},
-{name:"Hawak Kamay",pattern:"U D U D U D",lyrics:`[Verse 1]
-C       G
-Hawak kamay
-
-[Chorus]
-C       G
-Hawak kamay lagi`,url:"https://www.songsterr.com/a/wa/song/987654"},
-{name:"Ikaw",pattern:"D U U D U D",lyrics:`[Verse 1]
-Am       F
-Ikaw ang lahat
-
-[Chorus]
-Am      F
-Ikaw lang`,url:"https://www.songsterr.com/a/wa/song/112233"},
-{name:"Tagpuan",pattern:"D D U D U",lyrics:`[Verse 1]
-Em      C
-Tagpuan
-
-[Chorus]
-Em      C
-Sa ating pag-ibig`,url:"https://www.songsterr.com/a/wa/song/445566"},
-{name:"Kung Ako Na Lang Sana",pattern:"D D U D U D",lyrics:`[Verse 1]
-C       G
-Kung ako na lang sana
-
-[Chorus]
-C       G
-Kung ako na lang sana`,url:"https://www.songsterr.com/a/wa/song/556677"},
-{name:"Huwag Ka Lang Mawawala",pattern:"U D U D",lyrics:`[Verse 1]
-Am       G
-Huwag ka lang mawawala
-
-[Chorus]
-Am      G
-Huwag ka lang mawawala`,url:"https://www.songsterr.com/a/wa/song/667788"},
-{name:"Pusong Ligaw",pattern:"D U D U",lyrics:`[Verse 1]
-C       G
-Pusong ligaw
-
-[Chorus]
-C       G
-Pusong ligaw`,url:"https://www.songsterr.com/a/wa/song/778899"},
-{name:"Bakit Pa?",pattern:"D D U D",lyrics:`[Verse 1]
-F       C
-Bakit pa?
-
-[Chorus]
-F      C
-Bakit pa?`,url:"https://www.songsterr.com/a/wa/song/889900"},
-{name:"Mundo",pattern:"U D U D",lyrics:`[Verse 1]
-G       D
-Mundo
-
-[Chorus]
-G       D
-Mundo`,url:"https://www.songsterr.com/a/wa/song/990011"},
-{name:"Sa’yo",pattern:"D D U D U",lyrics:`[Verse 1]
-C       G
-Sa'yo
-
-[Chorus]
-C       G
-Sa'yo`,url:"https://www.songsterr.com/a/wa/song/101112"},
-{name:"Mahal Ko o Mahal Ako",pattern:"D U D U D U",lyrics:`[Verse 1]
-Am      F
-Mahal ko o mahal ako
-
-[Chorus]
-Am      F
-Mahal ko o mahal ako`,url:"https://www.songsterr.com/a/wa/song/121314"},
-{name:"Sana",pattern:"D D U U D U",lyrics:`[Verse 1]
-C       G
-Sana
-
-[Chorus]
-C       G
-Sana`,url:"https://www.songsterr.com/a/wa/song/131415"},
-{name:"Torete",pattern:"D U D U",lyrics:`[Verse 1]
-Em      C
-Torete
-
-[Chorus]
-Em      C
-Torete`,url:"https://www.songsterr.com/a/wa/song/141516"},
-{name:"Hanggang Kailan",pattern:"D D U D",lyrics:`[Verse 1]
-G       D
-Hanggang kailan
-
-[Chorus]
-G       D
-Hanggang kailan`,url:"https://www.songsterr.com/a/wa/song/151617"},
-{name:"Nadarang",pattern:"U D U D",lyrics:`[Verse 1]
-Am      F
-Nadarang
-
-[Chorus]
-Am      F
-Nadarang`,url:"https://www.songsterr.com/a/wa/song/161718"},
-{name:"Paubaya",pattern:"D U D U D",lyrics:`[Verse 1]
-C       G
-Paubaya
-
-[Chorus]
-C       G
-Paubaya`,url:"https://www.songsterr.com/a/wa/song/171819"},
-{name:"Huling Sayaw",pattern:"D D U D",lyrics:`[Verse 1]
-Em      C
-Huling sayaw
-
-[Chorus]
-Em      C
-Huling sayaw`,url:"https://www.songsterr.com/a/wa/song/192021"},
-{name:"Di Na Muli",pattern:"D U D U",lyrics:`[Verse 1]
-G       D
-Di na muli
-
-[Chorus]
-G       D
-Di na muli`,url:"https://www.songsterr.com/a/wa/song/202122"}
-];
-
-// --- Populate Song Select ---
-function populateSongSelect(){
-  const sel=document.getElementById("song-select");
-  sel.innerHTML="";
-  songs.forEach((s,i)=>{
-    let o=document.createElement("option");
-    o.value=i;
-    o.textContent=s.name;
-    o.setAttribute("data-pattern",s.pattern);
-    sel.appendChild(o);
-  });
-  updateSongPattern();
-}
-
-// --- Update Song Pattern ---
-function updateSongPattern(){
-  let idx=document.getElementById("song-select").value;
-  let song=songs[idx];
-  document.getElementById("song-pattern").textContent="Strum Pattern: "+song.pattern;
-}
-
-// --- Random Song ---
-document.getElementById("random-song").onclick=()=>{
-  let i=Math.floor(Math.random()*songs.length);
-  document.getElementById("song-select").value=i;
-  updateSongPattern();
-}
-
-// --- Filter Songs ---
-function filterSongs(){
-  let term=document.getElementById("song-search").value.toLowerCase();
-  const sel=document.getElementById("song-select");
-  sel.innerHTML="";
-  songs.filter(s=>s.name.toLowerCase().includes(term))
-       .forEach((s,i)=>{
-          let o=document.createElement("option");
-          o.value=i;
-          o.textContent=s.name;
-          o.setAttribute("data-pattern",s.pattern);
-          sel.appendChild(o);
-       });
-  updateSongPattern();
-}
-
-// --- Guitar Sound Test Placeholder ---
-document.getElementById("play-guitar-sound").onclick=()=>{
-  alert("Guitar sound test coming soon!");
-}
-
-// --- Learn Song Button ---
-document.getElementById("learn-song-btn").onclick=()=>{
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("learn-song").classList.remove("hidden");
-  let idx=document.getElementById("song-select").valuelet song=songs[idx];
-  document.getElementById("learn-song-name").textContent="Song: "+song.name;
-  // Display chords in a readable format above lyrics
-  document.getElementById("learn-chords").innerHTML="<pre>"+chords.join(" ")+"</pre>";
-  // Full lyrics
-  document.getElementById("learn-lyrics").textContent=song.lyrics;
-  // Show strum pattern
-  document.getElementById("learn-pattern").textContent="Strum: "+song.pattern;
-  // Embed song link
-  document.getElementById("song-iframe").src=song.url;
-}
-
-// --- Chord Recognition Quiz ---
-let quizScore=0,quizQ=0,quizTimer,totalQ=5;
-document.getElementById("chord-quiz-btn").onclick=startQuiz;
-function startQuiz(){
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("chord-quiz").classList.remove("hidden");
-  quizScore=0;quizQ=0;
-  nextQuiz();
-}
-function nextQuiz(){
-  if(quizQ>=totalQ){
-    document.getElementById("quiz-display").textContent="Done! Score: "+quizScore+"/"+totalQ;
-    document.getElementById("quiz-choices").innerHTML="";
-    return;
-  }
-  let correct=chords[Math.floor(Math.random()*chords.length)];
-  document.getElementById("quiz-display").textContent=correct;
-  let choices=new Set([correct]);
-  while(choices.size<4) choices.add(chords[Math.floor(Math.random()*chords.length)]);
-  let shuffled=[...choices].sort(()=>Math.random()-0.5);
-  let container=document.getElementById("quiz-choices");
-  container.innerHTML="";
-  shuffled.forEach(c=>{
-    let b=document.createElement("button");
-    b.textContent=c;
-    b.onclick=()=>{
-      if(c===correct) quizScore++;
-      quizQ++;
-      clearInterval(quizTimer);
-      nextQuiz();
-      // Update HUD if exists
-      const hud=document.getElementById("burger-hud-score");
-      if(hud) hud.textContent="Quiz Score: "+quizScore+"/"+totalQ;
-    };
-    container.appendChild(b);
-  });
-  // Timer
-  let t=5;
-  document.getElementById("time-left").textContent=t;
-  quizTimer=setInterval(()=>{
-    t--;
-    document.getElementById("time-left").textContent=t;
-    if(t<=0){
-      clearInterval(quizTimer);
-      quizQ++;
-      nextQuiz();
-    }
-  },1000);
-}
-
-// --- Initialize ---
-populateChordGrid();
-populateSongSelect();
-</script>
-
-  <!-- Part 3.7.3: HUD, Dark Mode, Mobile GUI, Guitar Sound Test, Login Fixes -->
-<!-- Dark Mode Toggle -->
-<button id="dark-toggle" style="position:fixed;top:10px;right:10px;z-index:1000;">Toggle Dark Mode</button>
-
-<!-- HUD for Quiz -->
-<div id="hud" class="hidden" style="position:fixed;top:50px;right:10px;background:#222;color:white;padding:10px;border-radius:8px;z-index:1000;">
-  <p>Quiz Score: <span id="hud-score">0</span></p>
-  <p>Accuracy: <span id="hud-accuracy">0</span>%</p>
-</div>
-
-<script>
-// --- Dark Mode ---
-const darkToggle = document.getElementById("dark-toggle");
-darkToggle.onclick = () => {
-  document.body.classList.toggle("dark-mode");
-  document.querySelectorAll('.chord-card').forEach(c=>c.classList.toggle("dark-mode"));
-};
-
-// --- HUD Updates ---
-function updateHUD(score, total){
-  const accuracy = total>0 ? Math.round((score/total)*100) : 0;
-  document.getElementById("hud-score").textContent = score;
-  document.getElementById("hud-accuracy").textContent = accuracy;
-}
-
-// --- Guitar Sound Test ---
-const guitarAudio = new Audio("sound/guitar-strum.mp3"); // make sure this file exists
-document.getElementById("play-guitar-sound").onclick = () => {
-  guitarAudio.currentTime = 0;
-  guitarAudio.play();
-};
-
-// --- Quiz HUD Integration ---
-function startQuizWithHUD(){
-  document.getElementById("hud").classList.remove("hidden");
-  quizScore = 0;
-  quizQ = 0;
-  nextQuizWithHUD();
-}
-
-function nextQuizWithHUD(){
-  if(quizQ>=totalQ){
-    document.getElementById("quiz-display").textContent = "Done! Score: " + quizScore + "/" + totalQ;
-    document.getElementById("quiz-choices").innerHTML="";
-    updateHUD(quizScore, totalQ);
-    return;
-  }
-  const correct = chords[Math.floor(Math.random()*chords.length)];
-  document.getElementById("quiz-display").textContent = correct;
-  let choices = new Set([correct]);
-  while(choices.size<4) choices.add(chords[Math.floor(Math.random()*chords.length)]);
-  let shuffled = [...choices].sort(()=>Math.random()-0.5);
-  const container = document.getElementById("quiz-choices");
-  container.innerHTML = "";
-  shuffled.forEach(c=>{
-    let b = document.createElement("button");
-    b.textContent = c;
-    b.onclick = () => {
-      if(c===correct) quizScore++;
-      quizQ++;
-      nextQuizWithHUD();
-      if(currentUser && currentUser!=="Guest") {
-        users[currentUser].lastScore=quizScore;
-        localStorage.setItem("guitarUsers", JSON.stringify(users));
-      }
-      updateHUD(quizScore, quizQ);
-    };
-    container.appendChild(b);
-  });
-  updateHUD(quizScore, quizQ);
-}
-
-// --- Login GUI Fixes ---
-const loginScreen = document.getElementById("intro-screen");
-const burgerBtn = document.getElementById("burger-btn");
-burgerBtn.style.display = "none"; // hide burger on login screen
-
-// Continue Without Account button fixed
-document.getElementById("continue-btn").onclick = () => {
-  currentUser="Guest";
-  loginScreen.classList.add("hidden");
-  document.getElementById("main-menu").classList.remove("hidden");
-};
-
-// Forgot Password Placeholder
-const forgotBtn = document.createElement("button");
-forgotBtn.textContent = "Forgot Password?";
-forgotBtn.onclick = () => alert("Forgot Password functionality coming soon!");
-forgotBtn.style.display="block";
-loginScreen.appendChild(forgotBtn);
-
-// Mobile Layout Improvements
-const style = document.createElement("style");
-style.textContent = `
-@media screen and (max-width: 600px){
-  .chord-grid{flex-direction:column;align-items:center;}
-  #strum input, #strum select{width:90%;}
-  #learn-song iframe{height:300px;}
-  button{width:90%;margin:5px;}
-}
-.dark-mode{background:#111;color:white;}
-`;
-document.head.appendChild(style);
-</script>
-
-  <!-- Part 3.7.4 - Chunk 1: Structure, Login, Main Menu, Chords -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guitar Hub Trainer</title>
-<style>
-body{font-family:Arial,sans-serif;margin:0;padding:0;background:#111;color:white;}
-header{width:100%;background:#000;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;z-index:1000;}
-header .logo{font-weight:bold;font-size:1.6em;color:orange;}
-button,input,select{padding:8px;margin:5px;border-radius:6px;border:none;font-size:1em;cursor:pointer;}
-.hidden{display:none;}
-.chord-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:10px;}
-.chord-card{background:#222;padding:10px;border-radius:8px;width:100px;color:white;text-align:center;}
-.chord-card img{width:80px;height:auto;}
-ul{list-style:none;padding:0;}
-li{padding:5px;margin:3px;background:#222;border-radius:6px;cursor:pointer;}
-.orange{background:orange;color:#111;}
-iframe{width:100%;height:400px;border:0;margin-top:10px;}
-.dark-mode{background:#111;color:white;}
-@media screen and (max-width:768px){
-    .chord-card{width:70px;padding:5px;}
-    button,input,select{font-size:0.9em;padding:6px;}
-}
-</style>
-</head>
-<body>
-<header>
-<div class="logo">Guitar Hub</div>
-</header>
-<main style="padding-top:80px;">
-<div id="intro-screen">
-<h1>Welcome</h1>
-<input type="text" id="username" placeholder="Username"><br>
-<div style="position:relative;display:inline-block;">
-<input type="password" id="password" placeholder="Password">
-<button id="toggle-pass" style="position:absolute;right:0;top:0;padding:5px;">👁️</button>
-</div><br>
-<button id="login-btn" class="orange">Log In</button>
-<button id="create-acc-btn" class="orange">Create Account</button>
-<button id="continue-btn" class="orange">Continue Without Account</button>
-</div>
-
-<div id="main-menu" class="hidden">
-<h2>Main Menu</h2>
-<button id="view-chords-btn" class="orange">View Chords</button>
-<button id="practice-btn" class="orange">Practice Chords</button>
-<button id="strum-btn" class="orange">Practice Strum</button>
-<button id="chord-quiz-btn" class="orange">Chord Recognition</button>
-<button id="learn-song-btn" class="orange">Learn Song</button>
-<button id="dark-mode-btn" class="orange">Toggle Dark Mode</button>
-</div>
-
-<div id="chords" class="hidden">
-<h2>Chords</h2>
-<div class="chord-grid" id="chord-grid"></div>
-<button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<script>
-// --- Global ---
-let currentUser=null;
-let users=JSON.parse(localStorage.getItem("guitarUsers"))||{};
-const chords=["C","D","E","F","G","A","B","Am","Dm","Em"];
-function goBack(){
-    document.getElementById("chords").classList.add("hidden");
-    document.getElementById("practice").classList.add("hidden");
-    document.getElementById("strum").classList.add("hidden");
-    document.getElementById("chord-quiz").classList.add("hidden");
-    document.getElementById("learn-song").classList.add("hidden");
-    document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Show Password ---
-document.getElementById("toggle-pass").onclick=()=>{
-    let p=document.getElementById("password");
-    p.type=p.type==="password"?"text":"password";
-}
-
-// --- Login & Create Account ---
-document.getElementById("login-btn").onclick=()=>{
-    let u=document.getElementById("username").value.trim();
-    let p=document.getElementById("password").value.trim();
-    if(!u||!p){alert("Enter username & password");return;}
-    if(users[u]&&users[u].password===p){currentUser=u;alert("Logged in");showMenu();}
-    else alert("Invalid credentials");
-};
-document.getElementById("create-acc-btn").onclick=()=>{
-    let u=document.getElementById("username").value.trim();
-    let p=document.getElementById("password").value.trim();
-    if(!u||!p){alert("Enter username & password");return;}
-    if(users[u]){alert("User already exists");return;}
-    users[u]={password:p,lastScore:0};localStorage.setItem("guitarUsers",JSON.stringify(users));
-    currentUser=u;alert("Account created");showMenu();
-};
-document.getElementById("continue-btn").onclick=()=>{
-    currentUser="Guest";
-    showMenu();
-};
-function showMenu(){
-    document.getElementById("intro-screen").classList.add("hidden");
-    document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Dark Mode Toggle ---
-document.getElementById("dark-mode-btn").onclick=()=>{
-    document.body.classList.toggle("dark-mode");
-}
-
-// --- Populate Chords Grid ---
-function populateChordGrid(){
-    const grid=document.getElementById("chord-grid");
-    grid.innerHTML="";
-    chords.forEach(c=>{
-        let div=document.createElement("div");
-        div.className="chord-card";
-        div.innerHTML=`<img src="image/${c.toLowerCase()}.png" alt="${c}"><br>${c}`;
-        grid.appendChild(div);
-    });
-}
-
-// --- View Chords ---
-document.getElementById("view-chords-btn").onclick=()=>{
-    document.getElementById("main-menu").classList.add("hidden");
-    document.getElementById("chords").classList.remove("hidden");
-    populateChordGrid();
-}
-</script>
-</body>
-</html>
-
-  <!-- 3.7.5 Part 1: Core Layout, Login, Main Menu, Chords, Practice -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guitar Hub Trainer</title>
-<style>
-body{font-family:Arial,sans-serif;margin:0;padding:0;background:#111;color:white;text-align:center;transition:0.3s;}
-header{width:100%;background:#000;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;z-index:1000;}
-.logo{font-weight:bold;font-size:1.6em;color:orange;}
-button,input,select{padding:8px;margin:5px;border-radius:6px;border:none;font-size:1em;cursor:pointer;}
-.hidden{display:none;}
-.chord-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:10px;}
-.chord-card{background:#222;padding:10px;border-radius:8px;width:100px;color:white;display:flex;flex-direction:column;align-items:center;}
-.chord-card img{width:80px;height:auto;}
-ul{list-style:none;padding:0;}
-li{padding:5px;margin:3px;background:#222;border-radius:6px;cursor:pointer;}
-iframe{width:100%;height:400px;border:0;margin-top:10px;}
-.orange{background:orange;color:#111;font-weight:bold;}
-.dark-mode{background:#111;color:white;}
-@media(max-width:768px){
-  header{flex-direction:column;align-items:flex-start;}
-  .chord-card{width:80px;}
-}
-</style>
-</head>
-<body>
-
-<header>
-<div class="logo">Guitar Hub</div>
+  <!-- Burger only in main menu -->
+  <button id="burger-btn" class="hidden">&#9776;</button>
 </header>
 
 <main style="padding-top:80px;">
-
-<!-- Login Screen -->
 <div id="intro-screen">
-<h1>Welcome</h1>
-<input type="text" id="username" placeholder="Username"><br>
-<div style="position:relative;display:inline-block;">
-<input type="password" id="password" placeholder="Password" style="padding-right:30px;">
-<button id="toggle-pass" style="position:absolute;right:0;top:0;padding:5px;">👁️</button>
-</div><br>
-<button id="login-btn" class="orange">Log In</button>
-<button id="create-acc-btn" class="orange">Create Account</button>
-<button id="continue-btn" class="orange">Continue Without Account</button>
-<button id="forgot-btn" class="orange">Forgot Password</button>
-</div>
-
-<!-- Main Menu -->
-<div id="main-menu" class="hidden">
-<h2>Main Menu</h2>
-<button id="view-chords-btn" class="orange">View Chords</button>
-<button id="practice-btn" class="orange">Practice Chords</button>
-<button id="strum-btn" class="orange">Practice Strum</button>
-<button id="chord-quiz-btn" class="orange">Chord Recognition</button>
-<button id="learn-song-btn" class="orange">Learn Song</button>
-<button id="dark-mode-btn" class="orange">Toggle Dark Mode</button>
-</div>
-
-<!-- Chords Display -->
-<div id="chords" class="hidden">
-<h2>Chords</h2>
-<div class="chord-grid" id="chord-grid"></div>
-<button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<!-- Practice Chords -->
-<div id="practice" class="hidden">
-<h2>Practice Chords</h2>
-<div id="practice-display" style="font-size:2em;"></div>
-<button id="next-practice" class="orange">Next</button>
-<p id="practice-feedback"></p>
-<button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<script>
-// --- Global ---
-let currentUser=null;
-let users=JSON.parse(localStorage.getItem("guitarUsers"))||{};
-const chords=["C","D","E","F","G","A","B","Am","Dm","Em"];
-
-// --- Helper Functions ---
-function goBack(){
-  document.getElementById("chords").classList.add("hidden");
-  document.getElementById("practice").classList.add("hidden");
-  document.getElementById("strum").classList.add("hidden");
-  document.getElementById("chord-quiz").classList.add("hidden");
-  document.getElementById("learn-song").classList.add("hidden");
-  document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Show Password ---
-document.getElementById("toggle-pass").onclick=()=>{
-  let p=document.getElementById("password");
-  p.type=p.type==="password"?"text":"password";
-}
-
-// --- Login Functions ---
-document.getElementById("login-btn").onclick=()=>{
-  let u=document.getElementById("username").value.trim();
-  let p=document.getElementById("password").value.trim();
-  if(!u||!p){alert("Enter username & password");return;}
-  if(users[u] && users[u].password===p){currentUser=u;alert("Logged in");showMenu();}
-  else alert("Invalid credentials");
-}
-document.getElementById("create-acc-btn").onclick=()=>{
-  let u=document.getElementById("username").value.trim();
-  let p=document.getElementById("password").value.trim();
-  if(!u||!p){alert("Enter username & password");return;}
-  if(users[u]){alert("User exists");return;}
-  users[u]={password:p,lastScore:0};
-  localStorage.setItem("guitarUsers",JSON.stringify(users));
-  currentUser=u;
-  alert("Account created");
-  showMenu();
-}
-document.getElementById("continue-btn").onclick=()=>{
-  currentUser="Guest";
-  showMenu();
-}
-function showMenu(){
-  document.getElementById("intro-screen").classList.add("hidden");
-  document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Chords Display ---
-document.getElementById("view-chords-btn").onclick=()=>{
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("chords").classList.remove("hidden");
-  const g=document.getElementById("chord-grid");
-  g.innerHTML="";
-  chords.forEach(c=>{
-    let div=document.createElement("div");
-    div.className="chord-card";
-    div.innerHTML=`<img src="image/${c.toLowerCase()}.png" alt="${c}"><br>${c}`;
-    g.appendChild(div);
-  });
-}
-
-// --- Practice Chords ---
-document.getElementById("practice-btn").onclick=()=>{
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("practice").classList.remove("hidden");
-  nextPractice();
-}
-let practiceIndex=0;
-function nextPractice(){
-  practiceIndex=Math.floor(Math.random()*chords.length);
-  document.getElementById("practice-display").textContent=chords[practiceIndex];
-  document.getElementById("practice-feedback").textContent="";
-}
-document.getElementById("next-practice").onclick=nextPractice;
-
-// --- Dark Mode Toggle ---
-document.getElementById("dark-mode-btn").onclick=()=>{
-  document.body.classList.toggle("dark-mode");
-}
-</script>
-</main>
-</body>
-</html>
-
-  <!-- 3.7.6: Login, Main Menu, Header, Intro Screen, Dark Mode -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guitar Hub Trainer</title>
-<style>
-body { font-family: Arial, sans-serif; margin:0; padding:0; background:#111; color:white; text-align:center; transition:0.3s; }
-header { width:100%; background:#000; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; position:fixed; top:0; left:0; z-index:1000; }
-header .logo { font-weight:bold; font-size:1.6em; color:orange; }
-button,input,select { padding:10px; margin:5px; border-radius:6px; border:none; font-size:1em; cursor:pointer; }
-button.orange { background:orange; color:black; }
-.hidden { display:none; }
-main { padding-top:80px; }
-.chord-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; padding:10px; }
-.chord-card { background:#222; padding:10px; border-radius:8px; width:100px; color:white; }
-.chord-card img { width:80px; height:auto; }
-#intro-screen { max-width:400px; margin:0 auto; }
-#intro-screen input { width:calc(100% - 20px); }
-#intro-screen .password-wrapper { position:relative; display:inline-block; width:100%; }
-#intro-screen .password-wrapper button { position:absolute; right:0; top:0; padding:8px; background:#444; color:white; border-radius:0 6px 6px 0; border:none; cursor:pointer; }
-#main-menu { max-width:400px; margin:0 auto; }
-#dark-toggle { background:orange; color:black; }
-@media (max-width:600px) {
-  .chord-card { width:80px; }
-  header .logo { font-size:1.4em; }
-}
-</style>
-</head>
-<body>
-
-<header>
-  <div class="logo">Guitar Hub</div>
-  <button id="burger-btn">&#9776;</button>
-  <button id="dark-toggle">Dark Mode</button>
-</header>
-
-<main>
-<div id="intro-screen">
-  <h1>Welcome to Guitar Trainer</h1>
+  <h1>Welcome</h1>
   <input type="text" id="username" placeholder="Username"><br>
-  <div class="password-wrapper">
+  <div style="position:relative;display:inline-block;">
     <input type="password" id="password" placeholder="Password">
     <button id="toggle-pass">👁️</button>
   </div><br>
   <button id="login-btn" class="orange">Log In</button>
   <button id="create-acc-btn" class="orange">Create Account</button>
   <button id="continue-btn" class="orange">Continue Without Account</button>
-  <p><a href="#" id="forgot-pass" style="color:orange;">Forgot Password?</a></p>
 </div>
 
 <div id="main-menu" class="hidden">
   <h2>Main Menu</h2>
-  <button id="view-chords-btn" class="orange">View Chords</button><br>
-  <button id="practice-btn" class="orange">Practice Chords</button><br>
-  <button id="strum-btn" class="orange">Practice Strum</button><br>
-  <button id="chord-quiz-btn" class="orange">Chord Recognition</button><br>
+  <button id="view-chords-btn" class="orange">View Chords</button>
+  <button id="practice-btn" class="orange">Practice Chords</button>
+  <button id="strum-btn" class="orange">Practice Strum</button>
+  <button id="chord-quiz-btn" class="orange">Chord Recognition</button>
   <button id="learn-song-btn" class="orange">Learn Song</button>
+  <button id="dark-mode-btn" class="orange">Toggle Dark Mode</button>
 </div>
 
 <script>
-// --- Global Variables ---
-let currentUser = null;
-let users = JSON.parse(localStorage.getItem("guitarUsers")) || {};
-let darkMode = false;
-
-// --- Show Password Toggle ---
-document.getElementById("toggle-pass").onclick = () => {
-  let p = document.getElementById("password");
-  p.type = p.type === "password" ? "text" : "password";
-}
-
-// --- Dark Mode ---
-document.getElementById("dark-toggle").onclick = () => {
-  darkMode = !darkMode;
-  document.body.style.background = darkMode ? "#111" : "#fff";
-  document.body.style.color = darkMode ? "white" : "black";
-}
-
-// --- Intro Screen Buttons ---
-document.getElementById("login-btn").onclick = () => {
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value.trim();
-  if (!u || !p) { alert("Enter username & password"); return; }
-  if (users[u] && users[u].password === p) { currentUser = u; alert("Logged in"); showMenu(); }
-  else { alert("Invalid credentials"); }
-}
-
-document.getElementById("create-acc-btn").onclick = () => {
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value.trim();
-  if (!u || !p) { alert("Enter username & password"); return; }
-  if (users[u]) { alert("Username exists"); return; }
-  users[u] = { password: p, lastScore: 0 };
-  localStorage.setItem("guitarUsers", JSON.stringify(users));
-  currentUser = u;
-  alert("Account created");
-  showMenu();
-}
-
-document.getElementById("continue-btn").onclick = () => {
-  currentUser = "Guest";
-  showMenu();
-}
-
-document.getElementById("forgot-pass").onclick = () => {
-  alert("Forgot password feature coming soon!");
-}
-
-// --- Show Main Menu ---
-function showMenu() {
-  document.getElementById("intro-screen").classList.add("hidden");
-  document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Burger Button ---
-document.getElementById("burger-btn").onclick = () => {
-  const menu = document.getElementById("main-menu");
-  menu.classList.toggle("hidden");
-}
-</script>
-
-  <!-- Part 3.7.7: Chords Display, Practice Chords, Strum Practice, Learn Song Setup -->
-<main style="padding-top:80px;">
-  <!-- Chords Display -->
-  <div id="chords" class="hidden">
-    <h2>Chords</h2>
-    <div class="chord-grid" id="chord-grid"></div>
-    <button onclick="goBack()" class="orange">⬅ Back</button>
-  </div>
-
-  <!-- Practice Chords -->
-  <div id="practice" class="hidden">
-    <h2>Practice Chords</h2>
-    <div id="practice-display" style="font-size:2em;"></div>
-    <button id="next-practice" class="orange">Next</button>
-    <p id="practice-feedback"></p>
-    <button onclick="goBack()" class="orange">⬅ Back</button>
-  </div>
-
-  <!-- Strum Practice -->
-  <div id="strum" class="hidden">
-    <h2>Strum Practice</h2>
-    <input type="text" id="song-search" placeholder="Search songs..." oninput="filterSongs()"><br>
-    <select id="song-select" onchange="updateSongPattern()"></select><br>
-    <p id="song-pattern"></p>
-    <button id="random-song" class="orange">Random Song</button>
-    <button id="play-guitar-sound" class="orange">Guitar Sound Test</button>
-    <p id="strum-feedback"></p>
-    <button onclick="goBack()" class="orange">⬅ Back</button>
-  </div>
-
-  <!-- Learn Song Placeholder -->
-  <div id="learn-song" class="hidden">
-    <h2>Learn Song</h2>
-    <p id="learn-song-name"></p>
-    <div id="learn-chords"></div>
-    <div id="learn-lyrics" style="white-space:pre-wrap;"></div>
-    <div id="learn-pattern"></div>
-    <iframe id="song-iframe" src=""></iframe>
-    <button onclick="goBack()" class="orange">⬅ Back</button>
-  </div>
-</main>
-
-<script>
-  // --- Populate Chord Grid ---
-  function populateChordGrid() {
-    const grid = document.getElementById("chord-grid");
-    grid.innerHTML = "";
-    const chords = ["C","D","E","F","G","A","B","Am","Dm","Em"];
-    chords.forEach(c => {
-      let div = document.createElement("div");
-      div.className = "chord-card";
-      div.innerHTML = `<img src="image/${c.toLowerCase()}.png" alt="${c}"><br>${c}`;
-      grid.appendChild(div);
-    });
-  }
-
-  // --- Practice Chords ---
-  let practiceIndex = 0;
-  const chords = ["C","D","E","F","G","A","B","Am","Dm","Em"];
-
-  document.getElementById("practice-btn").onclick = () => {
-    document.getElementById("main-menu").classList.add("hidden");
-    document.getElementById("practice").classList.remove("hidden");
-    nextPractice();
-  };
-
-  function nextPractice() {
-    practiceIndex = Math.floor(Math.random() * chords.length);
-    document.getElementById("practice-display").textContent = chords[practiceIndex];
-    document.getElementById("practice-feedback").textContent = "";
-  }
-
-  document.getElementById("next-practice").onclick = nextPractice;
-
-  // --- Songs Data (for Strum and Learn Song) ---
-  const songs = [
-    {name:"Anak",pattern:"D D U U D U",lyrics:`[Verse 1]
-C               G
-Anak, naku, anak
-Am              Em
-Kumain ka na ba?
-
-[Chorus]
-C      G
-Anak, pakinggan mo`, url:"https://www.songsterr.com/a/wa/song/44251"},
-    {name:"Buwan",pattern:"D U D U D U",lyrics:`[Verse 1]
-F        C
-Buwan, buwan
-Dm       Bb
-Ikaw ang liwanag
-
-[Chorus]
-F      C
-Buwan, ikaw`, url:"https://www.songsterr.com/a/wa/song/123456"},
-    {name:"Tadhana",pattern:"D D D D",lyrics:`[Verse 1]
-G      D
-Tadhana, ooh
-
-[Chorus]
-G      D
-Tadhana, tadhana`, url:"https://www.songsterr.com/a/wa/song/654321"},
-    {name:"Hawak Kamay",pattern:"U D U D U D",lyrics:`[Verse 1]
-C       G
-Hawak kamay
-
-[Chorus]
-C       G
-Hawak kamay mo`, url:"https://www.songsterr.com/a/wa/song/987654"}
-  ];
-
-  // --- Populate Song Select ---
-  function populateSongSelect(){
-    const sel = document.getElementById("song-select");
-    sel.innerHTML = "";
-    songs.forEach((s,i)=>{
-      let o = document.createElement("option");
-      o.value = i;
-      o.textContent = s.name;
-      o.setAttribute("data-pattern", s.pattern);
-      sel.appendChild(o);
-    });
-    updateSongPattern();
-  }
-
-  // --- Update Song Pattern ---
-  function updateSongPattern(){
-    let idx = document.getElementById("song-select").value;
-    let song = songs[idx];
-    document.getElementById("song-pattern").textContent = "Strum Pattern: "+song.pattern;
-  }
-
-  // --- Random Song ---
-  document.getElementById("random-song").onclick = () => {
-    let i = Math.floor(Math.random()*songs.length);
-    document.getElementById("song-select").value = i;
-    updateSongPattern();
-  }
-
-  // --- Filter Songs ---
-  function filterSongs(){
-    let term = document.getElementById("song-search").value.toLowerCase();
-    const sel = document.getElementById("song-select");
-    sel.innerHTML = "";
-    songs.filter(s => s.name.toLowerCase().includes(term))
-         .forEach((s,i)=>{
-           let o = document.createElement("option");
-           o.value = i;
-           o.textContent = s.name;
-           o.setAttribute("data-pattern", s.pattern);
-           sel.appendChild(o);
-         });
-    updateSongPattern();
-  }
-
-  // --- Guitar Sound Test Placeholder ---
-  document.getElementById("play-guitar-sound").onclick = () => {
-    alert("Guitar sound test coming soon!");
-  }
-
-  // --- Learn Song Setup ---
-  document.getElementById("learn-song-btn").onclick = () => {
-    document.getElementById("main-menu").classList.add("hidden");
-    document.getElementById("learn-song").classList.remove("hidden");
-    let idx = document.getElementById("song-select").value;
-    let song = songs[idx];
-    document.getElementById("learn-song-name").textContent = "Song: "+song.name;
-    document.getElementById("learn-chords").innerHTML = "<pre>"+chords.join(" ")+"</pre>";
-    document.getElementById("learn-lyrics").textContent = song.lyrics;
-    document.getElementById("learn-pattern").textContent = "Strum: "+song.pattern;
-    document.getElementById("song-iframe").src = song.url;
-  }
-
-  // --- Initialize Chord Grid ---
-  populateChordGrid();
-  populateSongSelect();
-</script>
-
-  <!-- Part 3.7.8: Login GUI & Local Chord Images Fix -->
-<div id="intro-screen">
-  <h1 style="color:orange;">Welcome to Guitar Hub</h1>
-  <input type="text" id="username" placeholder="Username"><br>
-  <div style="position:relative; display:inline-block; width:200px;">
-    <input type="password" id="password" placeholder="Password" style="width:100%;">
-    <button id="toggle-pass" style="position:absolute; right:0; top:0; padding:5px; background:none; border:none; cursor:pointer;">👁️</button>
-  </div><br>
-  <button id="login-btn" class="orange">Log In</button>
-  <button id="create-acc-btn" class="orange">Create Account</button>
-  <button id="continue-btn" class="orange">Continue Without Account</button>
-  <p id="forgot-pass" style="color:lightblue; cursor:pointer; margin-top:5px;">Forgot Password?</p>
-</div>
-
-<script>
-// --- Toggle Password ---
-document.getElementById("toggle-pass").onclick = () => {
-  const p = document.getElementById("password");
-  p.type = p.type === "password" ? "text" : "password";
-};
-
-// --- User Auth (Local) ---
-let currentUser = null;
-let users = JSON.parse(localStorage.getItem("guitarUsers")) || {};
-
-document.getElementById("login-btn").onclick = () => {
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value.trim();
-  if (!u || !p) { alert("Enter username & password"); return; }
-  if (users[u] && users[u].password === p) {
-    currentUser = u;
-    alert("Logged in as " + u);
-    showMainMenu();
-  } else alert("Invalid credentials");
-};
-
-document.getElementById("create-acc-btn").onclick = () => {
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value.trim();
-  if (!u || !p) { alert("Enter username & password"); return; }
-  if (users[u]) { alert("User already exists"); return; }
-  users[u] = { password: p, lastScore: 0 };
-  localStorage.setItem("guitarUsers", JSON.stringify(users));
-  currentUser = u;
-  alert("Account created for " + u);
-  showMainMenu();
-};
-
-document.getElementById("continue-btn").onclick = () => {
-  currentUser = "Guest";
-  showMainMenu();
-};
-
-// --- Forgot Password Placeholder ---
-document.getElementById("forgot-pass").onclick = () => {
-  alert("Forgot password feature coming soon!");
-};
-
-// --- Show Main Menu ---
-function showMainMenu() {
-  document.getElementById("intro-screen").classList.add("hidden");
-  document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Populate Local Chord Images ---
-function populateChordGrid() {
-  const grid = document.getElementById("chord-grid");
-  grid.innerHTML = "";
-  const chords = ["C","D","E","F","G","A","B","Am","Dm","Em"];
-  chords.forEach(c => {
-    let div = document.createElement("div");
-    div.className = "chord-card";
-    div.innerHTML = `<img src="image/${c.toLowerCase()}.png" alt="${c}" style="width:80px;height:auto;"><br>${c}`;
-    grid.appendChild(div);
-  });
-}
-</script>
-
-  <!-- Part 3.7.8: Login GUI & Local Chord Images Fix -->
-<div id="intro-screen">
-  <h1 style="color:orange;">Welcome to Guitar Hub</h1>
-  <input type="text" id="username" placeholder="Username"><br>
-  <div style="position:relative; display:inline-block; width:200px;">
-    <input type="password" id="password" placeholder="Password" style="width:100%;">
-    <button id="toggle-pass" style="position:absolute; right:0; top:0; padding:5px; background:none; border:none; cursor:pointer;">👁️</button>
-  </div><br>
-  <button id="login-btn" class="orange">Log In</button>
-  <button id="create-acc-btn" class="orange">Create Account</button>
-  <button id="continue-btn" class="orange">Continue Without Account</button>
-  <p id="forgot-pass" style="color:lightblue; cursor:pointer; margin-top:5px;">Forgot Password?</p>
-</div>
-
-<script>
-// --- Toggle Password ---
-document.getElementById("toggle-pass").onclick = () => {
-  const p = document.getElementById("password");
-  p.type = p.type === "password" ? "text" : "password";
-};
-
-// --- User Auth (Local) ---
-let currentUser = null;
-let users = JSON.parse(localStorage.getItem("guitarUsers")) || {};
-
-document.getElementById("login-btn").onclick = () => {
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value.trim();
-  if (!u || !p) { alert("Enter username & password"); return; }
-  if (users[u] && users[u].password === p) {
-    currentUser = u;
-    alert("Logged in as " + u);
-    showMainMenu();
-  } else alert("Invalid credentials");
-};
-
-document.getElementById("create-acc-btn").onclick = () => {
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value.trim();
-  if (!u || !p) { alert("Enter username & password"); return; }
-  if (users[u]) { alert("User already exists"); return; }
-  users[u] = { password: p, lastScore: 0 };
-  localStorage.setItem("guitarUsers", JSON.stringify(users));
-  currentUser = u;
-  alert("Account created for " + u);
-  showMainMenu();
-};
-
-document.getElementById("continue-btn").onclick = () => {
-  currentUser = "Guest";
-  showMainMenu();
-};
-
-// --- Forgot Password Placeholder ---
-document.getElementById("forgot-pass").onclick = () => {
-  alert("Forgot password feature coming soon!");
-};
-
-// --- Show Main Menu ---
-function showMainMenu() {
-  document.getElementById("intro-screen").classList.add("hidden");
-  document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Populate Local Chord Images ---
-function populateChordGrid() {
-  const grid = document.getElementById("chord-grid");
-  grid.innerHTML = "";
-  const chords = ["C","D","E","F","G","A","B","Am","Dm","Em"];
-  chords.forEach(c => {
-    let div = document.createElement("div");
-    div.className = "chord-card";
-    div.innerHTML = `<img src="image/${c.toLowerCase()}.png" alt="${c}" style="width:80px;height:auto;"><br>${c}`;
-    grid.appendChild(div);
-  });
-}
-</script>
-
-  <!-- 3.7.9: Full Bug-Fixed Chunk -->
-<header>
-  <div class="logo">Guitar Hub</div>
-  <!-- Burger only shows in main menu, hidden in login -->
-  <button id="burger-btn" class="hidden">&#9776;</button>
-</header>
-
-<main style="padding-top:80px;">
-  <!-- Login / Intro Screen -->
-  <div id="intro-screen">
-    <h1>Welcome</h1>
-    <input type="text" id="username" placeholder="Username"><br>
-    <div style="position:relative;display:inline-block;">
-      <input type="password" id="password" placeholder="Password">
-      <button id="toggle-pass" style="position:absolute;right:0;top:0;padding:5px;">👁️</button>
-    </div><br>
-    <button id="login-btn">Log In</button>
-    <button id="create-acc-btn">Create Account</button>
-    <button id="continue-btn">Continue Without Account</button>
-    <button id="forgot-btn">Forgot Password</button>
-  </div>
-
-  <!-- Main Menu -->
-  <div id="main-menu" class="hidden">
-    <h2>Main Menu</h2>
-    <button id="view-chords-btn">View Chords</button>
-    <button id="practice-btn">Practice Chords</button>
-    <button id="strum-btn">Practice Strum</button>
-    <button id="chord-quiz-btn">Chord Recognition</button>
-    <button id="learn-song-btn">Learn Song</button>
-    <button id="dark-mode-btn">Dark Mode</button>
-  </div>
-
-  <!-- Chords -->
-  <div id="chords" class="hidden">
-    <h2>Chords</h2>
-    <div class="chord-grid" id="chord-grid"></div>
-    <button onclick="goBack()">⬅ Back</button>
-  </div>
-
-  <!-- Practice Chords -->
-  <div id="practice" class="hidden">
-    <h2>Practice Chords</h2>
-    <div id="practice-display" style="font-size:2em;"></div>
-    <button id="next-practice">Next</button>
-    <p id="practice-feedback"></p>
-    <button onclick="goBack()">⬅ Back</button>
-  </div>
-</main>
-
-<script>
-// --- Global ---
 let currentUser=null;
 let users=JSON.parse(localStorage.getItem("guitarUsers"))||{};
 const chords=["C","D","E","F","G","A","B","Am","Dm","Em"];
-const songs=[
-{name:"Anak",pattern:"D D U U D U",lyrics:`[Verse 1]
-C               G
-Anak, naku, anak
-Am              Em
-Kumain ka na ba?
-[Chorus]
-C       G
-Anak, anak
-Am      Em
-Lumaki ka na`,url:"https://www.songsterr.com/a/wa/song/44251"},
-{name:"Buwan",pattern:"D U D U D U",lyrics:`[Verse 1]
-F        C
-Buwan, buwan
-Dm       Bb
-Ikaw ang liwanag
-[Chorus]
-F       C
-Buwan, buwan
-Dm      Bb
-Liwanag mo'y gabay`,url:"https://www.songsterr.com/a/wa/song/123456"}
-// Add remaining 18 songs similarly
-];
 
-// --- Helpers ---
-function goBack(){
-  document.getElementById("chords").classList.add("hidden");
-  document.getElementById("practice").classList.add("hidden");
-  document.getElementById("strum").classList.add("hidden");
-  document.getElementById("chord-quiz").classList.add("hidden");
-  document.getElementById("learn-song").classList.add("hidden");
-  document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Show Password ---
-document.getElementById("toggle-pass").onclick=()=>{
-  let p=document.getElementById("password");
-  p.type = p.type==="password" ? "text":"password";
-}
-
-// --- Login ---
+// --- Login & Account ---
+document.getElementById("toggle-pass").onclick=()=> {
+  const p=document.getElementById("password");
+  p.type = p.type==="password"?"text":"password";
+};
 document.getElementById("login-btn").onclick=()=>{
-  let u=document.getElementById("username").value.trim();
-  let p=document.getElementById("password").value.trim();
+  const u=document.getElementById("username").value.trim();
+  const p=document.getElementById("password").value.trim();
   if(!u||!p){alert("Enter username & password"); return;}
   if(users[u] && users[u].password===p){currentUser=u; alert("Logged in"); showMenu();}
-  else alert("Invalid credentials");
+  else alert("Invalid username or password");
 };
 document.getElementById("create-acc-btn").onclick=()=>{
-  let u=document.getElementById("username").value.trim();
-  let p=document.getElementById("password").value.trim();
+  const u=document.getElementById("username").value.trim();
+  const p=document.getElementById("password").value.trim();
   if(!u||!p){alert("Enter username & password"); return;}
-  if(users[u]){alert("User already exists"); return;}
+  if(users[u]){alert("Account exists"); return;}
   users[u]={password:p,lastScore:0};
-  localStorage.setItem("guitarUsers", JSON.stringify(users));
+  localStorage.setItem("guitarUsers",JSON.stringify(users));
   currentUser=u;
   alert("Account created");
   showMenu();
@@ -2462,28 +141,70 @@ function showMenu(){
   document.getElementById("burger-btn").classList.remove("hidden");
 }
 
-// --- Burger Menu ---
-document.getElementById("burger-btn").onclick=()=>{
-  const menu=document.getElementById("main-menu");
-  menu.classList.toggle("hidden");
+// --- Dark Mode Toggle ---
+document.getElementById("dark-mode-btn").onclick=()=>{
+  if(document.body.style.background==="#111"){
+    document.body.style.background="#fff"; document.body.style.color="#000";
+  } else {
+    document.body.style.background="#111"; document.body.style.color="#fff";
+  }
 }
+</script>
+</body>
+</html>
+<!-- Part 2/10: Chords Grid + Practice Chords -->
+<div id="chords" class="hidden">
+  <h2>Chords</h2>
+  <div class="chord-grid" id="chord-grid"></div>
+  <button onclick="goBack()" class="orange">⬅ Back</button>
+</div>
 
-// --- Populate Chords Images ---
-function populateChordGrid(){
-  const grid=document.getElementById("chord-grid");
-  grid.innerHTML="";
-  chords.forEach(c=>{
-    let div=document.createElement("div");
-    div.className="chord-card";
-    div.innerHTML=`<img src="image/${c.toLowerCase()}.png" alt="${c}"><br>${c}`;
+<div id="practice" class="hidden">
+  <h2>Practice Chords</h2>
+  <div id="practice-display" style="font-size:2em;"></div>
+  <button id="next-practice" class="orange">Next</button>
+  <p id="practice-feedback"></p>
+  <button onclick="goBack()" class="orange">⬅ Back</button>
+</div>
+
+<script>
+// --- Populate Chord Grid ---
+function populateChordGrid() {
+  const grid = document.getElementById("chord-grid");
+  grid.innerHTML = "";
+  const chords = ["C","D","E","F","G","A","B","Am","Dm","Em"];
+  chords.forEach(c => {
+    const div = document.createElement("div");
+    div.className = "chord-card";
+    div.innerHTML = `<img src="image/${c.toLowerCase()}.png" alt="${c}"><br>${c}`;
     grid.appendChild(div);
   });
 }
+
+// --- Practice Chords ---
+let practiceIndex = 0;
+function nextPractice() {
+  const chords = ["C","D","E","F","G","A","B","Am","Dm","Em"];
+  practiceIndex = Math.floor(Math.random() * chords.length);
+  document.getElementById("practice-display").textContent = chords[practiceIndex];
+  document.getElementById("practice-feedback").textContent = "";
+}
+
+document.getElementById("practice-btn").onclick = () => {
+  document.getElementById("main-menu").classList.add("hidden");
+  document.getElementById("practice").classList.remove("hidden");
+  nextPractice();
+};
+document.getElementById("next-practice").onclick = nextPractice;
+
+// --- Initialize Chords Grid ---
+document.getElementById("view-chords-btn").onclick = () => {
+  document.getElementById("main-menu").classList.add("hidden");
+  document.getElementById("chords").classList.remove("hidden");
+  populateChordGrid();
+};
 </script>
-
-  <!-- 3.8.0a: HTML Structure + Strum Practice + Learn Song containers + first part of script -->
-
-<!-- Strum Practice -->
+<!-- Part 3/10: Strum Practice + Learn Song (Full Lyrics) -->
 <div id="strum" class="hidden">
   <h2>Strum Practice</h2>
   <input type="text" id="song-search" placeholder="Search songs..." oninput="filterSongs()"><br>
@@ -2495,145 +216,204 @@ function populateChordGrid(){
   <button onclick="goBack()" class="orange">⬅ Back</button>
 </div>
 
-<!-- Learn Song -->
 <div id="learn-song" class="hidden">
   <h2>Learn Song</h2>
   <p id="learn-song-name"></p>
-  <div id="learn-chords"></div>
-  <div id="learn-lyrics" style="white-space:pre-wrap;"></div>
+  <div id="learn-chords" style="white-space: pre;"></div>
+  <div id="learn-lyrics" style="white-space: pre-wrap;"></div>
   <div id="learn-pattern"></div>
-  <iframe id="song-iframe" src=""></iframe>
-  <button onclick="goBack()" class="orange">⬅ Back</button>
-</div>
-
-<!-- Chord Quiz -->
-<div id="chord-quiz" class="hidden">
-  <h2>Chord Recognition</h2>
-  <div id="quiz-display"></div>
-  <div id="quiz-choices" class="chord-grid"></div>
-  <div id="quiz-score"></div>
+  <iframe id="song-iframe" src="" style="width:100%;height:300px;border:0;"></iframe>
   <button onclick="goBack()" class="orange">⬅ Back</button>
 </div>
 
 <script>
-// --- Local chord images ---
-function populateChordGrid() {
-  const grid = document.getElementById("chord-grid");
-  grid.innerHTML = "";
-  chords.forEach(c => {
-    let div = document.createElement("div");
-    div.className = "chord-card";
-    div.innerHTML = `<img src="image/${c.toLowerCase()}.png" alt="${c}"><br>${c}`;
-    grid.appendChild(div);
-  });
-}
-
-// --- Practice Chords ---
-document.getElementById("practice-btn").onclick = () => {
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("practice").classList.remove("hidden");
-  nextPractice();
-};
-let practiceIndex = 0;
-function nextPractice() {
-  practiceIndex = Math.floor(Math.random() * chords.length);
-  document.getElementById("practice-display").textContent = chords[practiceIndex];
-  document.getElementById("practice-feedback").textContent = "";
-}
-document.getElementById("next-practice").onclick = nextPractice;
-
-// --- Songs Array (20+ songs) ---
+// --- Song Data with Full Lyrics (5 example songs, full)
 const songs = [
-  {name:"Anak",pattern:"D D U U D U",lyrics:`[Verse 1]
+  {
+    name:"Anak",
+    pattern:"D D U U D U",
+    lyrics:`[Verse 1]
 C               G
-Anak, naku, anak
+Nang isilang ka sa mundong ito
 Am              Em
-Kumain ka na ba?
+Laking tuwa ng magulang mo
+C               G
+At ang kamay mo'y kanyang kamay
+Am              Em
+Habang siya'y ginagabay
 
 [Chorus]
-C        G
-Anak, anak
-Am       Em
-Pakinggan mo ako`,url:"https://www.songsterr.com/a/wa/song/44251"},
-  {name:"Buwan",pattern:"D U D U D U",lyrics:`[Verse 1]
+C               G
+Anak, 'wag mong kalimutan
+Am              Em
+Ang mga aral na itinuro
+C               G
+Anak, sa bawat hakbang mo
+Am              Em
+Pag-ibig namin ay laging nariyan
+
+[Verse 2]
+C               G
+Lumaki ka na, mundo'y tinatahak
+Am              Em
+Maraming pagsubok na iyong haharapin
+C               G
+Huwag kang matakot, lagi kaming narito
+Am              Em
+Tangan ang pagmamahal na walang kapantay`,
+
+    url:"https://www.songsterr.com/a/wa/song/44251"
+  },
+  {
+    name:"Buwan",
+    pattern:"D U D U D U",
+    lyrics:`[Verse 1]
 F        C
 Buwan, buwan
 Dm       Bb
 Ikaw ang liwanag
+F        C
+Ng aking gabi
+Dm       Bb
+Tangan ang pangarap
 
 [Chorus]
-F       C
-Buwan, buwan
-Dm      Bb
-Nagmumuni-muni`,url:"https://www.songsterr.com/a/wa/song/123456"},
-  {name:"Tadhana",pattern:"D D D D",lyrics:`[Verse 1]
+F        C
+Buwan, ikaw ang tala
+Dm       Bb
+Sa aking madilim na mundo
+F        C
+Buwan, gabay sa akin
+Dm       Bb
+Pagmamahal mo'y tunay
+
+[Verse 2]
+F        C
+Sa bawat gabi na ika'y nakatanaw
+Dm       Bb
+Ang puso ko'y napapawi ang takot
+F        C
+Buwan, ikaw ang aking inspirasyon
+Dm       Bb
+Sa bawat hakbang, ikaw ang gabay`,
+
+    url:"https://www.songsterr.com/a/wa/song/123456"
+  },
+  {
+    name:"Tadhana",
+    pattern:"D D D D",
+    lyrics:`[Verse 1]
 G      D
 Tadhana, ooh
+Em      C
+Ikaw ang dahilan
+G      D
+Bakit ako'y nagmahal
+Em      C
+Ng buong puso
 
 [Chorus]
 G      D
-Tadhana, ikaw`,url:"https://www.songsterr.com/a/wa/song/654321"},
-  {name:"Hawak Kamay",pattern:"U D U D U D",lyrics:`[Verse 1]
-C       G
-Hawak kamay
-
-[Chorus]
-C       G
-Hawak kamay`,url:"https://www.songsterr.com/a/wa/song/987654"},
-  {name:"Ikaw",pattern:"D U U D U D",lyrics:`[Verse 1]
-Am       F
-Ikaw ang lahat
-
-[Chorus]
-Am       F
-Ikaw, ikaw`,url:"https://www.songsterr.com/a/wa/song/112233"},
-  {name:"Tagpuan",pattern:"D D U D U",lyrics:`[Verse 1]
+Tadhana, 'di mo maiiwasan
 Em      C
-Tagpuan
-
-[Chorus]
+Bakit tayo'y nagtagpo
+G      D
+Kahit na ang mundo'y malawak
 Em      C
-Tagpuan, tagpuan`,url:"https://www.songsterr.com/a/wa/song/445566"},
-  {name:"Kung Ako Na Lang Sana",pattern:"D D U D U D",lyrics:`[Verse 1]
+Pag-ibig natin ay nakatakda
+
+[Verse 2]
+G      D
+Nandiyan ka sa aking bawat araw
+Em      C
+Sa tadhana'y tayo'y nagtagpo
+G      D
+Hindi ko na kailangan pang hanapin
+Em      C
+Dahil ikaw na ang aking lahat`,
+
+    url:"https://www.songsterr.com/a/wa/song/654321"
+  },
+  {
+    name:"Hawak Kamay",
+    pattern:"U D U D U D",
+    lyrics:`[Verse 1]
 C       G
-Kung ako na lang sana
+Hawak kamay, di kita iiwan
+Am      Em
+Sa bawat laban, tayo'y magkasama
+C       G
+Huwag kang matakot, ako'y narito
+Am      Em
+Buo ang suporta ko sa'yo
 
 [Chorus]
 C       G
-Kung ako na lang sana`,url:"https://www.songsterr.com/a/wa/song/556677"},
-  {name:"Huwag Ka Lang Mawawala",pattern:"U D U D",lyrics:`[Verse 1]
-Am       G
-Huwag ka lang mawawala
-
-[Chorus]
-Am      G
-Huwag ka lang mawawala`,url:"https://www.songsterr.com/a/wa/song/667788"},
-  {name:"Pusong Ligaw",pattern:"D U D U",lyrics:`[Verse 1]
+Hawak kamay, sabay nating tatahakin
+Am      Em
+Ang landas ng ating mga pangarap
 C       G
-Pusong ligaw
+Hawak kamay, di mag-iisa
+Am      Em
+Pagmamahalan natin ay tunay
 
-[Chorus]
+[Verse 2]
 C       G
-Pusong ligaw`,url:"https://www.songsterr.com/a/wa/song/778899"},
-  {name:"Bakit Pa?",pattern:"D D U D",lyrics:`[Verse 1]
-F       C
-Bakit pa?
+Sa bawat unos, sa bawat bagyo
+Am      Em
+Ang ating puso ay di matitinag
+C       G
+Hawak kamay, di ka nag-iisa
+Am      Em
+Ako'y narito, kasama mo`,
+
+    url:"https://www.songsterr.com/a/wa/song/987654"
+  },
+  {
+    name:"Ikaw",
+    pattern:"D U U D U D",
+    lyrics:`[Verse 1]
+Am       F
+Ikaw ang lahat ng aking hinintay
+C        G
+Sa bawat sandali, ikaw ang laman ng puso
+Am       F
+Di ko na kailangan pang maghanap
+C        G
+Dahil sa'yo ako'y kumpleto na
 
 [Chorus]
-F       C
-Bakit pa?`,url:"https://www.songsterr.com/a/wa/song/889900"}
-// Add 10+ more songs similarly...
+Am       F
+Ikaw, ikaw ang aking tadhana
+C        G
+Pag-ibig natin ay wagas at totoo
+Am       F
+Ikaw, sa bawat pintig ng puso
+C        G
+Ikaw lamang ang aking sinta
+
+[Verse 2]
+Am       F
+Sa bawat umaga at bawat gabi
+C        G
+Pangako ko, di ka iiwan
+Am       F
+Ikaw ang dahilan ng bawat ngiti
+C        G
+Sa akin, ikaw lang ang mahal`,
+
+    url:"https://www.songsterr.com/a/wa/song/112233"
+  }
 ];
-<!-- 3.8.0b: Learn Song, Chord Quiz, Practice Strum Final Fixes -->
 
 // --- Populate Song Select ---
 function populateSongSelect(){
-  const sel = document.getElementById("song-select");
-  sel.innerHTML = "";
+  const sel=document.getElementById("song-select");
+  sel.innerHTML="";
   songs.forEach((s,i)=>{
-    let o = document.createElement("option");
-    o.value = i;
-    o.textContent = s.name;
+    let o=document.createElement("option");
+    o.value=i;
+    o.textContent=s.name;
     o.setAttribute("data-pattern",s.pattern);
     sel.appendChild(o);
   });
@@ -2642,21 +422,463 @@ function populateSongSelect(){
 
 // --- Update Song Pattern ---
 function updateSongPattern(){
+  let idx=document.getElementById("song-select").value;
+  let song=songs[idx];
+  document.getElementById("song-pattern").textContent="Strum Pattern: "+song.pattern;
+}
+
+// --- Random Song ---
+document.getElementById("random-song").onclick=()=>{
+  let i=Math.floor(Math.random()*songs.length);
+  document.getElementById("song-select").value=i;
+  updateSongPattern();
+}
+
+// --- Filter Songs ---
+function filterSongs(){
+  let term=document.getElementById("song-search").value.toLowerCase();
+  const sel=document.getElementById("song-select");
+  sel.innerHTML="";
+  songs.filter(s=>s.name.toLowerCase().includes(term))
+       .forEach((s,i)=>{
+          let o=document.createElement("option");
+          o.value=i;
+          o.textContent=s.name;
+          o.setAttribute("data-pattern",s.pattern);
+          sel.appendChild(o);
+       });
+  updateSongPattern();
+}
+
+// --- Guitar Sound Test Placeholder ---
+document.getElementById("play-guitar-sound").onclick=()=>{
+  alert("Guitar sound test coming soon!");
+}
+
+// --- Learn Song ---
+document.getElementById("learn-song-btn").onclick=()=>{
+  document.getElementById("main-menu").classList.add("hidden");
+  document.getElementById("learn-song").classList.remove("hidden");
+  let idx=document.getElementById("song-select").value;
+  let song=songs[idx];
+  document.getElementById("learn-song-name").textContent="Song: "+song.name;
+  document.getElementById("learn-chords").innerHTML="<pre>"+chords.join(" ")+"</pre>";
+  document.getElementById("learn-lyrics").textContent=song.lyrics;
+  document.getElementById("learn-pattern").textContent="Strum: "+song.pattern;
+  document.getElementById("song-iframe").src=song.url;
+}
+</script>
+<!-- Part 4: Learn Song + More Songs Button -->
+<div id="learn-song" class="hidden">
+  <h2>Learn Song</h2>
+  <p id="learn-song-name"></p>
+  <div id="learn-chords" style="white-space: pre;"></div>
+  <div id="learn-lyrics" style="white-space: pre-wrap;"></div>
+  <div id="learn-pattern"></div>
+  <iframe id="song-iframe" src="" style="width:100%;height:300px;border:0;"></iframe>
+
+  <!-- More Songs Button -->
+  <button id="more-songs" class="orange">Want More Songs? Download "Tabs" App</button>
+
+  <button onclick="goBack()" class="orange">⬅ Back</button>
+</div>
+
+<script>
+// Open external tabs app for more songs
+document.getElementById("more-songs").onclick = () => {
+  window.open("https://www.example-tabs-app.com", "_blank");
+}
+
+// Learn Song Logic
+document.getElementById("learn-song-btn").onclick = () => {
+  document.getElementById("main-menu").classList.add("hidden");
+  document.getElementById("learn-song").classList.remove("hidden");
+  
   let idx = document.getElementById("song-select").value;
-  let song = songs[idx];
-  document.getElementById("song-pattern").textContent = "Strum Pattern: " + song.pattern;
+  let song = songs[idx]; // songs array from previous part
+  
   document.getElementById("learn-song-name").textContent = "Song: " + song.name;
-  document.getElementById("learn-chords").innerHTML = "<pre>" + chords.join(" ") + "</pre>";
+  document.getElementById("learn-chords").textContent = song.chords || chords.join(" ");
   document.getElementById("learn-lyrics").textContent = song.lyrics;
   document.getElementById("learn-pattern").textContent = "Strum: " + song.pattern;
   document.getElementById("song-iframe").src = song.url;
+};
+</script>
+<!-- Part 4/Chunk 1: Strum Practice, Dark Mode, Burger HUD -->
+<div id="strum" class="hidden">
+  <h2>Strum Practice</h2>
+  <input type="text" id="song-search" placeholder="Search Philippine songs..." oninput="filterSongs()"><br>
+  <select id="song-select" onchange="updateSongPattern()"></select><br>
+  <p id="song-pattern"></p>
+  <button id="random-song" class="orange">Random Song</button>
+  <button id="play-guitar-sound" class="orange">Guitar Sound Test</button>
+  <p id="strum-feedback"></p>
+  <button onclick="goBack()" class="orange">⬅ Back</button>
+</div>
+
+<!-- Dark Mode Toggle -->
+<button id="dark-mode-toggle" class="orange" style="position:fixed;bottom:10px;right:10px;">Toggle Dark Mode</button>
+
+<!-- Burger HUD -->
+<div id="burger-hud" class="hidden" style="position:fixed;top:60px;right:0;background:#222;color:white;padding:10px;width:200px;border-radius:0 0 0 10px;z-index:1000;">
+  <h4>HUD</h4>
+  <p>Quiz Score: <span id="hud-score">0</span></p>
+  <p>Accuracy: <span id="hud-accuracy">0%</span></p>
+  <button onclick="document.getElementById('burger-hud').classList.add('hidden')" class="orange">Close</button>
+</div>
+
+<script>
+// --- Songs for Strum Practice ---
+const strumSongs = [
+  {name:"Anak", pattern:"D D U U D U"},
+  {name:"Buwan", pattern:"D U D U D U"},
+  {name:"Tadhana", pattern:"D D D D"},
+  {name:"Hawak Kamay", pattern:"U D U D U D"},
+  {name:"Ikaw", pattern:"D U U D U D"},
+  {name:"Tagpuan", pattern:"D D U D U"},
+  {name:"Kung Ako Na Lang Sana", pattern:"D D U D U D"},
+  {name:"Huwag Ka Lang Mawawala", pattern:"U D U D"},
+  {name:"Pusong Ligaw", pattern:"D U D U"},
+  {name:"Bakit Pa?", pattern:"D D U D"},
+  {name:"Mundo", pattern:"U D U D"},
+  {name:"Sa’yo", pattern:"D D U D U"},
+  {name:"Mahal Ko o Mahal Ako", pattern:"D U D U D U"},
+  {name:"Sana", pattern:"D D U U D U"},
+  {name:"Torete", pattern:"D U D U"},
+  {name:"Hanggang Kailan", pattern:"D D U D"},
+  {name:"Nadarang", pattern:"U D U D"},
+  {name:"Paubaya", pattern:"D U D U D"},
+  {name:"Huling Sayaw", pattern:"D D U D"},
+  {name:"Di Na Muli", pattern:"D U D U"}
+];
+
+// --- Populate Song Select ---
+function populateSongSelect(){
+  const sel=document.getElementById("song-select");
+  sel.innerHTML="";
+  strumSongs.forEach((s,i)=>{
+    let o=document.createElement("option");
+    o.value=i;
+    o.textContent=s.name;
+    o.setAttribute("data-pattern",s.pattern);
+    sel.appendChild(o);
+  });
+  updateSongPattern();
+}
+
+// --- Update Song Pattern ---
+function updateSongPattern(){
+  let idx=document.getElementById("song-select").value;
+  let song=strumSongs[idx];
+  document.getElementById("song-pattern").textContent="Strum Pattern: "+song.pattern;
+}
+
+// --- Random Song ---
+document.getElementById("random-song").onclick=()=>{
+  let i=Math.floor(Math.random()*strumSongs.length);
+  document.getElementById("song-select").value=i;
+  updateSongPattern();
+}
+
+// --- Filter Songs ---
+function filterSongs(){
+  let term=document.getElementById("song-search").value.toLowerCase();
+  const sel=document.getElementById("song-select");
+  sel.innerHTML="";
+  strumSongs.filter(s=>s.name.toLowerCase().includes(term))
+       .forEach((s,i)=>{
+          let o=document.createElement("option");
+          o.value=i;
+          o.textContent=s.name;
+          o.setAttribute("data-pattern",s.pattern);
+          sel.appendChild(o);
+       });
+  updateSongPattern();
+}
+
+// --- Guitar Sound Test ---
+document.getElementById("play-guitar-sound").onclick=()=>{
+  alert("Guitar sound test coming soon!");
+}
+
+// --- Dark Mode Toggle ---
+document.getElementById("dark-mode-toggle").onclick=()=>{
+  document.body.classList.toggle("dark-mode");
+}
+</script>
+
+<style>
+/* Dark Mode CSS */
+body.dark-mode{
+  background:#111;
+  color:white;
+}
+body.dark-mode header{
+  background:#000;
+}
+body.dark-mode .chord-card{
+  background:#222;
+}
+body.dark-mode select,input,button{
+  background:#333;
+  color:white;
+}
+</style>
+<!-- Part 4 Chunk 2: Learn Song + Tabs link -->
+<div id="learn-song" class="hidden">
+  <h2>Learn Song</h2>
+  <p id="learn-song-name"></p>
+  <div id="learn-chords"></div>
+  <div id="learn-lyrics" style="white-space: pre-wrap;"></div>
+  <div id="learn-pattern"></div>
+  <iframe id="song-iframe" src="" style="width:100%;height:400px;border:0;"></iframe>
+  <button onclick="goBack()" class="orange">⬅ Back</button>
+  <br><br>
+  <button onclick="window.open('https://tabsapp.com', '_blank')" class="orange">
+    Want more songs? Download Tabs app
+  </button>
+</div>
+
+<script>
+// --- Learn Song Handler ---
+document.getElementById("learn-song-btn").onclick = () => {
+  document.getElementById("main-menu").classList.add("hidden");
+  document.getElementById("learn-song").classList.remove("hidden");
+
+  let idx = document.getElementById("song-select").value;
+  let song = songs[idx];
+
+  document.getElementById("learn-song-name").textContent = "Song: " + song.name;
+  document.getElementById("learn-chords").innerHTML = "<pre>" + chords.join(" ") + "</pre>";
+
+  // Show only the portion of lyrics in-app, full lyrics can be accessed via Tabs
+  document.getElementById("learn-lyrics").textContent = song.lyrics;
+
+  document.getElementById("learn-pattern").textContent = "Strum: " + song.pattern;
+  document.getElementById("song-iframe").src = song.url;
+}
+</script>
+<!-- Part 5: Strum Practice -->
+<div id="strum" class="hidden">
+  <h2>Strum Practice</h2>
+  <input type="text" id="song-search" placeholder="Search songs..." oninput="filterSongs()"><br>
+  <select id="song-select" onchange="updateSongPattern()"></select><br>
+  <p id="song-pattern"></p>
+  <button id="random-song" class="orange">Random Song</button>
+  <button id="play-guitar-sound" class="orange">Guitar Sound Test</button>
+  <p id="strum-feedback"></p>
+  <button onclick="goBack()" class="orange">⬅ Back</button>
+</div>
+
+<script>
+// --- Strum Practice Songs ---
+const strumSongs = [
+  {name:"Anak", pattern:"D D U U D U", url:"https://www.songsterr.com/a/wa/song/44251"},
+  {name:"Buwan", pattern:"D U D U D U", url:"https://www.songsterr.com/a/wa/song/123456"},
+  {name:"Tadhana", pattern:"D D D D", url:"https://www.songsterr.com/a/wa/song/654321"},
+  {name:"Hawak Kamay", pattern:"U D U D U D", url:"https://www.songsterr.com/a/wa/song/987654"},
+  {name:"Ikaw", pattern:"D U U D U D", url:"https://www.songsterr.com/a/wa/song/112233"},
+  {name:"Tagpuan", pattern:"D D U D U", url:"https://www.songsterr.com/a/wa/song/445566"},
+  {name:"Kung Ako Na Lang Sana", pattern:"D D U D U D", url:"https://www.songsterr.com/a/wa/song/556677"},
+  {name:"Huwag Ka Lang Mawawala", pattern:"U D U D", url:"https://www.songsterr.com/a/wa/song/667788"},
+  {name:"Pusong Ligaw", pattern:"D U D U", url:"https://www.songsterr.com/a/wa/song/778899"},
+  {name:"Bakit Pa?", pattern:"D D U D", url:"https://www.songsterr.com/a/wa/song/889900"},
+  {name:"Mundo", pattern:"U D U D", url:"https://www.songsterr.com/a/wa/song/990011"},
+  {name:"Sa’yo", pattern:"D D U D U", url:"https://www.songsterr.com/a/wa/song/101112"},
+  {name:"Mahal Ko o Mahal Ako", pattern:"D U D U D U", url:"https://www.songsterr.com/a/wa/song/121314"},
+  {name:"Sana", pattern:"D D U U D U", url:"https://www.songsterr.com/a/wa/song/131415"},
+  {name:"Torete", pattern:"D U D U", url:"https://www.songsterr.com/a/wa/song/141516"},
+  {name:"Hanggang Kailan", pattern:"D D U D", url:"https://www.songsterr.com/a/wa/song/151617"},
+  {name:"Nadarang", pattern:"U D U D", url:"https://www.songsterr.com/a/wa/song/161718"},
+  {name:"Paubaya", pattern:"D U D U D", url:"https://www.songsterr.com/a/wa/song/171819"},
+  {name:"Huling Sayaw", pattern:"D D U D", url:"https://www.songsterr.com/a/wa/song/192021"},
+  {name:"Di Na Muli", pattern:"D U D U", url:"https://www.songsterr.com/a/wa/song/202122"}
+];
+
+// --- Populate Song Select ---
+function populateSongSelect() {
+  const sel = document.getElementById("song-select");
+  sel.innerHTML = "";
+  strumSongs.forEach((s, i) => {
+    let o = document.createElement("option");
+    o.value = i;
+    o.textContent = s.name;
+    o.setAttribute("data-pattern", s.pattern);
+    sel.appendChild(o);
+  });
+  updateSongPattern();
+}
+
+// --- Update Song Pattern ---
+function updateSongPattern() {
+  let idx = document.getElementById("song-select").value;
+  let song = strumSongs[idx];
+  document.getElementById("song-pattern").textContent = "Strum Pattern: " + song.pattern;
 }
 
 // --- Random Song ---
 document.getElementById("random-song").onclick = () => {
-  let i = Math.floor(Math.random() * songs.length);
+  let i = Math.floor(Math.random() * strumSongs.length);
   document.getElementById("song-select").value = i;
   updateSongPattern();
+}
+
+// --- Filter Songs ---
+function filterSongs() {
+  let term = document.getElementById("song-search").value.toLowerCase();
+  const sel = document.getElementById("song-select");
+  sel.innerHTML = "";
+  strumSongs.filter(s => s.name.toLowerCase().includes(term))
+           .forEach((s, i) => {
+             let o = document.createElement("option");
+             o.value = i;
+             o.textContent = s.name;
+             o.setAttribute("data-pattern", s.pattern);
+             sel.appendChild(o);
+           });
+  updateSongPattern();
+}
+
+// --- Guitar Sound Test ---
+document.getElementById("play-guitar-sound").onclick = () => {
+  alert("Guitar sound test coming soon!");
+}
+
+// --- Show Strum Practice ---
+document.getElementById("strum-btn").onclick = () => {
+  document.getElementById("main-menu").classList.add("hidden");
+  document.getElementById("strum").classList.remove("hidden");
+  populateSongSelect();
+}
+  <!-- Part 6: Chord Recognition & Quiz HUD -->
+<div id="chord-quiz" class="hidden">
+  <h2>Chord Recognition Quiz</h2>
+  <div id="quiz-display" style="font-size:2em;margin:10px;"></div>
+  <div id="quiz-choices" class="chord-grid"></div>
+  <div id="quiz-hud" style="margin-top:10px;">
+    <span id="quiz-score-display">Score: 0</span> |
+    <span id="quiz-accuracy-display">Accuracy: 0%</span>
+  </div>
+  <button onclick="goBack()" class="orange" style="margin-top:10px;">⬅ Back</button>
+</div>
+
+<script>
+// --- Chord Quiz ---
+let quizScore = 0, quizQ = 0, totalQ = 10;
+
+function startQuiz() {
+  document.getElementById("main-menu").classList.add("hidden");
+  document.getElementById("chord-quiz").classList.remove("hidden");
+  quizScore = 0;
+  quizQ = 0;
+  nextQuiz();
+}
+
+function nextQuiz() {
+  if (quizQ >= totalQ) {
+    updateHUD();
+    document.getElementById("quiz-display").textContent = "Quiz Complete! Score: " + quizScore + "/" + totalQ;
+    document.getElementById("quiz-choices").innerHTML = "";
+    return;
+  }
+
+  let correct = chords[Math.floor(Math.random() * chords.length)];
+  document.getElementById("quiz-display").textContent = correct;
+
+  let choices = new Set([correct]);
+  while (choices.size < 4) {
+    choices.add(chords[Math.floor(Math.random() * chords.length)]);
+  }
+
+  let shuffled = [...choices].sort(() => Math.random() - 0.5);
+  const container = document.getElementById("quiz-choices");
+  container.innerHTML = "";
+
+  shuffled.forEach(c => {
+    let b = document.createElement("button");
+    b.textContent = c;
+    b.onclick = () => {
+      if (c === correct) quizScore++;
+      quizQ++;
+      updateHUD();
+      nextQuiz();
+    };
+    container.appendChild(b);
+  });
+}
+
+// --- Update HUD ---
+function updateHUD() {
+  document.getElementById("quiz-score-display").textContent = "Score: " + quizScore;
+  let accuracy = quizQ === 0 ? 0 : Math.round((quizScore / quizQ) * 100);
+  document.getElementById("quiz-accuracy-display").textContent = "Accuracy: " + accuracy + "%";
+}
+
+// --- Show Quiz ---
+document.getElementById("chord-quiz-btn").onclick = startQuiz;
+
+// --- Populate Chord Images for Reference (Optional) ---
+function populateChordImages() {
+  const grid = document.getElementById("chord-grid");
+  grid.innerHTML = "";
+  chords.forEach(c => {
+    let div = document.createElement("div");
+    div.className = "chord-card";
+    div.innerHTML = `<img src="image/${c.toLowerCase()}.png" alt="${c}" style="width:80px;"><br>${c}`;
+    grid.appendChild(div);
+  });
+}
+
+// Call this once if you want the chord images ready for reference
+populateChordImages();
+</script>
+<!-- Part 8: Additional Strum Practice Songs & Final Debug -->
+<div id="strum" class="hidden">
+  <h2>Strum Practice</h2>
+  <input type="text" id="song-search" placeholder="Search songs..." oninput="filterSongs()"><br>
+  <select id="song-select" onchange="updateSongPattern()"></select><br>
+  <p id="song-pattern"></p>
+  <button id="random-song" class="orange">Random Song</button>
+  <button id="play-guitar-sound" class="orange">Guitar Sound Test</button>
+  <p id="strum-feedback"></p>
+  <button onclick="goBack()" class="orange">⬅ Back</button>
+</div>
+
+<script>
+// --- Additional Songs for Strum Practice ---
+songs.push(
+  {name:"Bagong Umaga", pattern:"D U D U D U", lyrics:"[Verse 1]\nC G\nBagong umaga...", url:"https://www.songsterr.com/a/wa/song/232425"},
+  {name:"Sulyap", pattern:"D D U U D U", lyrics:"[Verse 1]\nAm F\nSulyap...", url:"https://www.songsterr.com/a/wa/song/242526"},
+  {name:"Bawat Daan", pattern:"U D U D U D", lyrics:"[Verse 1]\nG C\nBawat daan...", url:"https://www.songsterr.com/a/wa/song/252627"},
+  {name:"Hanggang Sa Huli", pattern:"D U D U", lyrics:"[Verse 1]\nEm D\nHanggang sa huli...", url:"https://www.songsterr.com/a/wa/song/262728"},
+  {name:"Kahit Ayaw Mo Na", pattern:"D D U D", lyrics:"[Verse 1]\nF C\nKahit ayaw mo na...", url:"https://www.songsterr.com/a/wa/song/272829"},
+  {name:"Kung 'Di Rin Lang Ikaw", pattern:"U D U D", lyrics:"[Verse 1]\nAm G\nKung 'di rin lang ikaw...", url:"https://www.songsterr.com/a/wa/song/282930"},
+  {name:"Tila", pattern:"D U D U D", lyrics:"[Verse 1]\nC G\nTila...", url:"https://www.songsterr.com/a/wa/song/293031"},
+  {name:"Mahal Pa Rin", pattern:"D D U U D U", lyrics:"[Verse 1]\nAm F\nMahal pa rin...", url:"https://www.songsterr.com/a/wa/song/303132"},
+  {name:"Di Mo Mapipigilan", pattern:"D U D U", lyrics:"[Verse 1]\nG C\nDi mo mapipigilan...", url:"https://www.songsterr.com/a/wa/song/313233"},
+  {name:"Ikaw Lamang", pattern:"D D U D", lyrics:"[Verse 1]\nF C\nIkaw lamang...", url:"https://www.songsterr.com/a/wa/song/323334"}
+);
+
+// --- Repopulate select after adding new songs ---
+populateSongSelect();
+
+// --- Guitar Sound Test ---
+document.getElementById("play-guitar-sound").onclick = () => {
+  // Placeholder functionality: can integrate Web Audio API or audio files later
+  alert("Guitar sound test coming soon!");
+}
+
+// --- Learn Song Button: Tabs App Prompt ---
+document.getElementById("learn-song-btn").onclick = () => {
+  document.getElementById("main-menu").classList.add("hidden");
+  document.getElementById("learn-song").classList.remove("hidden");
+  let idx = document.getElementById("song-select").value;
+  let song = songs[idx];
+  document.getElementById("learn-song-name").textContent = "Song: " + song.name;
+  document.getElementById("learn-chords").innerHTML = "<pre>" + chords.join(" ") + "</pre>";
+  document.getElementById("learn-lyrics").textContent = "[Full lyrics not included]\nWant more songs? Download the Tabs app!";
+  document.getElementById("learn-pattern").textContent = "Strum: " + song.pattern;
+  document.getElementById("song-iframe").src = song.url;
 }
 
 // --- Filter Songs ---
@@ -2665,7 +887,7 @@ function filterSongs(){
   const sel = document.getElementById("song-select");
   sel.innerHTML = "";
   songs.filter(s => s.name.toLowerCase().includes(term))
-       .forEach((s,i)=>{
+       .forEach((s, i) => {
           let o = document.createElement("option");
           o.value = i;
           o.textContent = s.name;
@@ -2675,82 +897,263 @@ function filterSongs(){
   updateSongPattern();
 }
 
-// --- Guitar Sound Test ---
-document.getElementById("play-guitar-sound").onclick = () => {
-  alert("Guitar sound test coming soon!");
+// --- Update Song Pattern ---
+function updateSongPattern(){
+  let idx = document.getElementById("song-select").value;
+  let song = songs[idx];
+  document.getElementById("song-pattern").textContent = "Strum Pattern: " + song.pattern;
 }
-
-// --- Chord Quiz ---
-document.getElementById("chord-quiz-btn").onclick = startQuiz;
-let quizScore = 0, quizQ = 0, totalQ = 5, quizTimer;
-
-function startQuiz(){
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("chord-quiz").classList.remove("hidden");
-  quizScore = 0;
-  quizQ = 0;
-  nextQuiz();
-}
-
-function nextQuiz(){
-  if(quizQ >= totalQ){
-    document.getElementById("quiz-display").textContent = "Done! Score: "+quizScore+"/"+totalQ;
-    document.getElementById("quiz-choices").innerHTML = "";
-    return;
-  }
-
-  let correct = chords[Math.floor(Math.random()*chords.length)];
-  document.getElementById("quiz-display").textContent = correct;
-
-  // choices with pictures
-  let choices = new Set([correct]);
-  while(choices.size < 4) choices.add(chords[Math.floor(Math.random()*chords.length)]);
-  let shuffled = [...choices].sort(()=>Math.random()-0.5);
-
-  let container = document.getElementById("quiz-choices");
-  container.innerHTML = "";
-  shuffled.forEach(c => {
-    let b = document.createElement("button");
-    b.innerHTML = `<img src="image/${c.toLowerCase()}.png" alt="${c}" style="width:50px"><br>${c}`;
-    b.onclick = () => {
-      if(c === correct) quizScore++;
-      quizQ++;
-      clearInterval(quizTimer);
-      nextQuiz();
-    };
-    container.appendChild(b);
-  });
-
-  // Timer
-  let t = 5;
-  quizTimer = setInterval(()=>{
-    t--;
-    if(t <= 0){
-      clearInterval(quizTimer);
-      quizQ++;
-      nextQuiz();
-    }
-  }, 1000);
-}
-
-// --- Learn Song Button ---
-document.getElementById("learn-song-btn").onclick = () => {
-  document.getElementById("main-menu").classList.add("hidden");
-  document.getElementById("learn-song").classList.remove("hidden");
-  updateSongPattern();
-}
-
-// --- Back Button ---
-function goBack(){
-  document.getElementById("chords").classList.add("hidden");
-  document.getElementById("practice").classList.add("hidden");
-  document.getElementById("strum").classList.add("hidden");
-  document.getElementById("chord-quiz").classList.add("hidden");
-  document.getElementById("learn-song").classList.add("hidden");
-  document.getElementById("main-menu").classList.remove("hidden");
-}
-
-// --- Populate Chord Grid on load ---
-populateChordGrid();
-populateSongSelect();
 </script>
+<!-- Part 9: Final Wrapping, HUD, Dark Mode, Mobile/Desktop Fixes -->
+<script>
+// --- Dark Mode Toggle ---
+let darkMode = false;
+const darkModeBtn = document.createElement("button");
+darkModeBtn.textContent = "🌙 Dark Mode";
+darkModeBtn.className = "orange";
+darkModeBtn.style.position = "fixed";
+darkModeBtn.style.bottom = "10px";
+darkModeBtn.style.right = "10px";
+darkModeBtn.onclick = () => {
+    darkMode = !darkMode;
+    document.body.style.background = darkMode ? "#111" : "#fff";
+    document.body.style.color = darkMode ? "white" : "#000";
+};
+document.body.appendChild(darkModeBtn);
+
+// --- Burger HUD for Quiz ---
+const hud = document.createElement("div");
+hud.id = "burger-hud";
+hud.style.position = "fixed";
+hud.style.top = "60px";
+hud.style.right = "10px";
+hud.style.background = "rgba(0,0,0,0.8)";
+hud.style.color = "white";
+hud.style.padding = "10px";
+hud.style.borderRadius = "8px";
+hud.style.display = "none";
+hud.innerHTML = `
+  <p>Quiz Score: <span id="hud-score">0</span></p>
+  <p>Accuracy: <span id="hud-accuracy">0%</span></p>
+`;
+document.body.appendChild(hud);
+
+document.getElementById("burger-btn").onclick = () => {
+    const menu = document.getElementById("main-menu");
+    menu.classList.toggle("hidden");
+    hud.style.display = hud.style.display === "none" ? "block" : "none";
+};
+
+// --- Update HUD ---
+function updateHUD(score, total) {
+    document.getElementById("hud-score").textContent = score;
+    let accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+    document.getElementById("hud-accuracy").textContent = accuracy + "%";
+}
+
+// --- Quiz fix: add timer & chord image ---
+function startQuiz() {
+    document.getElementById("main-menu").classList.add("hidden");
+    document.getElementById("chord-quiz").classList.remove("hidden");
+    quizScore = 0;
+    quizQ = 0;
+    nextQuiz();
+}
+function nextQuiz(){
+    if(quizQ >= totalQ){
+        document.getElementById("quiz-display").textContent = "Done! Score: " + quizScore + "/" + totalQ;
+        document.getElementById("quiz-choices").innerHTML = "";
+        updateHUD(quizScore, totalQ);
+        return;
+    }
+    let correct = chords[Math.floor(Math.random()*chords.length)];
+    document.getElementById("quiz-display").innerHTML = `<img src="image/${correct.toLowerCase()}.png" alt="${correct}" style="width:80px;height:auto;"><br>${correct}`;
+    let choices = new Set([correct]);
+    while(choices.size < 4) choices.add(chords[Math.floor(Math.random()*chords.length)]);
+    let shuffled = [...choices].sort(()=>Math.random()-0.5);
+    const container = document.getElementById("quiz-choices");
+    container.innerHTML = "";
+    shuffled.forEach(c => {
+        let b = document.createElement("button");
+        b.textContent = c;
+        b.onclick = () => {
+            if(c === correct) quizScore++;
+            quizQ++;
+            nextQuiz();
+            updateHUD(quizScore, totalQ);
+        };
+        container.appendChild(b);
+    });
+}
+
+// --- Mobile/Desktop compatibility ---
+function responsiveFix(){
+    const width = window.innerWidth;
+    const mainMenu = document.getElementById("main-menu");
+    if(width < 600){
+        mainMenu.style.fontSize = "0.9em";
+        mainMenu.style.padding = "10px";
+    } else {
+        mainMenu.style.fontSize = "1.1em";
+        mainMenu.style.padding = "20px";
+    }
+}
+window.addEventListener("resize", responsiveFix);
+responsiveFix();
+
+// --- Final Image check ---
+populateChordGrid(); // ensure all local chord images appear
+</script>
+<!-- Part 10: Final Styles, Mobile Fixes, Button Checks -->
+<style>
+/* --- Final CSS fixes --- */
+button.orange {background:#ff7f50;color:white;font-weight:bold;}
+button:hover {opacity:0.9;}
+#main-menu button, #chord-quiz button, #practice button, #strum button, #learn-song button {
+    margin:5px; width:150px; border-radius:6px; border:none; padding:8px;
+}
+#song-select {width:80%;padding:6px;margin:5px;border-radius:6px;border:none;}
+#song-search {width:80%;padding:6px;margin:5px;border-radius:6px;border:none;}
+.chord-card img {max-width:100px;height:auto;}
+#chord-grid {justify-content:center;}
+iframe {width:100%;height:400px;border:0;margin-top:10px;border-radius:8px;}
+
+/* --- Mobile adjustments --- */
+@media screen and (max-width: 600px){
+    header {flex-direction:column;align-items:center;}
+    .chord-card {width:70px;}
+    #main-menu button, #chord-quiz button, #practice button, #strum button, #learn-song button {width:100%;}
+    iframe {height:250px;}
+}
+</style>
+
+<script>
+// --- Final check: all buttons function ---
+const menuButtons = ["view-chords-btn","practice-btn","strum-btn","chord-quiz-btn","learn-song-btn"];
+menuButtons.forEach(id => {
+    const btn = document.getElementById(id);
+    if(!btn){console.warn("Missing button: "+id);}
+});
+
+// --- Ensure login buttons work ---
+document.getElementById("login-btn").onclick || console.warn("Login button missing");
+document.getElementById("create-acc-btn").onclick || console.warn("Create account button missing");
+document.getElementById("continue-btn").onclick || console.warn("Continue without account button missing");
+
+// --- Final HUD, Chord Grid refresh ---
+populateChordGrid();
+updateHUD(0,0);
+
+// --- Make sure strum select populates ---
+if(document.getElementById("song-select")) populateSongSelect();
+
+// --- Fix iframe scroll on mobile ---
+document.querySelectorAll("iframe").forEach(f => {
+    f.setAttribute("scrolling","no");
+});
+</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guitar Hub Trainer</title>
+<style>
+/* --- General Styles --- */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #111;
+  color: white;
+  text-align: center;
+}
+header {
+  width: 100%;
+  background: orange;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+}
+.logo {
+  font-weight: bold;
+  font-size: 1.6em;
+  color: white;
+}
+button, input, select {
+  padding: 8px;
+  margin: 5px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1em;
+  cursor: pointer;
+}
+button.orange { background: orange; color: #111; }
+.hidden { display: none; }
+.chord-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+}
+.chord-card {
+  background: #222;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100px;
+  color: white;
+}
+.chord-card img {
+  width: 80px;
+  height: auto;
+}
+ul { list-style: none; padding: 0; }
+li { padding: 5px; margin: 3px; background: #222; border-radius: 6px; cursor: pointer; }
+iframe { width: 100%; height: 400px; border: 0; margin-top: 10px; }
+/* --- Dark Mode --- */
+body.dark { background: #111; color: #fff; }
+body.dark header { background: #333; color: white; }
+body.dark .chord-card { background: #333; }
+/* --- Responsive --- */
+@media (max-width: 600px) {
+  .chord-card { width: 80px; padding: 5px; font-size: 0.9em; }
+  button, input, select { font-size: 0.9em; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Guitar Hub</div>
+  <button id="burger-btn">&#9776;</button>
+</header>
+
+<main style="padding-top:80px;">
+<!-- --- Login Screen --- -->
+<div id="intro-screen">
+  <h1>Welcome to Guitar Hub</h1>
+  <input type="text" id="username" placeholder="Username"><br>
+  <div style="position:relative;display:inline-block;">
+    <input type="password" id="password" placeholder="Password">
+    <button id="toggle-pass" style="position:absolute;right:0;top:0;padding:5px;">👁️</button>
+  </div><br>
+  <button id="login-btn" class="orange">Log In</button>
+  <button id="create-acc-btn" class="orange">Create Account</button>
+  <button id="continue-btn" class="orange">Continue Without Account</button>
+  <p><button id="forgot-pass" class="orange">Forgot Password?</button></p>
+</div>
+
+<!-- --- Main Menu --- -->
+<div id="main-menu" class="hidden">
+  <h2>Main Menu</h2>
+  <button id="view-chords-btn" class="orange">View Chords</button>
+  <button id="practice-btn" class="orange">Practice Chords</button>
+  <button id="strum-btn" class="orange">Practice Strum</button>
+  <button id="chord-quiz-btn" class="orange">Chord Recognition</button>
+  <button id="learn-song-btn" class="orange">Learn Song</button>
+  <button id="dark-mode-btn" class="orange">Toggle Dark Mode</button>
+</div>
