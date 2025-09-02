@@ -122,6 +122,7 @@
       <button onclick="showPractice()">Practice Chords</button>
       <button onclick="showStrum()">Practice Strum</button>
       <button onclick="showQuiz()">Chord Recognition Quiz</button>
+      <button onclick="showChordPractice()">Chord Recognition Practice</button>
       <button onclick="learnSongs()" class="ghost">Learn Songs</button>
       <button onclick="window.open('https://www.guitartuna.com/', '_blank')" class="ghost">Tune with GuitarTuna</button>
     </div>
@@ -171,6 +172,17 @@
     <div id="quiz-result" class="hidden" style="margin-top:12px;font-weight:700"></div>
     <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
+
+  <!-- New Chord Practice Panel -->
+  <div id="chord-practice" class="card hidden">
+    <h2 style="margin-top:0">Chord Recognition Practice</h2>
+    <div class="timer" id="practice-timer">5</div>
+    <div id="practice-chord-img" style="margin:8px"></div>
+    <div id="practice-options" style="max-width:420px;margin:0 auto;text-align:center"></div>
+    <p id="practice-score" style="margin-top:8px;font-weight:700"></p>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
+
 </main>
 
 <script type="module">
@@ -197,6 +209,7 @@ const chordsPanel = document.getElementById("chords");
 const practicePanel = document.getElementById("practice");
 const strumPanel = document.getElementById("strum");
 const quizPanel = document.getElementById("quiz");
+const chordPracticePanel = document.getElementById("chord-practice");
 const accountPanel = document.getElementById("account-panel");
 
 const emailInput = document.getElementById("email");
@@ -317,23 +330,23 @@ const songs = [
   {name:"Wonderwall - Oasis", chords:"Em7 G Dsus4 A7sus4", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
   {name:"Knockin' on Heaven's Door - Bob Dylan", chords:"G D Am G D C", pattern:"↓ ↓ ↑ ↓ ↑"},
   {name:"Zombie - The Cranberries", chords:"Em C G D", pattern:"↓ ↑ ↓ ↑"},
-  {name:"Let It Be - The Beatles", chords:"C G Am F", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-  {name:"Perfect - Ed Sheeran", chords:"G Em C D", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-  {name:"Tears in Heaven - Eric Clapton", chords:"A E/G# F#m D A E", pattern:"↓ ↓ ↑ ↓ ↑"},
-  {name:"Hotel California - Eagles", chords:"Bm F# A E G D Em F#", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-  {name:"Stand By Me - Ben E. King", chords:"G Em C D", pattern:"↓ ↑ ↓ ↑"},
-  {name:"Love Yourself - Justin Bieber", chords:"C D Em D", pattern:"↓ ↑ ↓ ↑"},
-  {name:"Yellow - Coldplay", chords:"B F# G#m E", pattern:"↓ ↓ ↑ ↓ ↑ ↓ ↑"},
-  {name:"All of Me - John Legend", chords:"Em C G D", pattern:"↓ ↑ ↓ ↑"},
-  {name:"Someone Like You - Adele", chords:"A E F#m D", pattern:"↓ ↓ ↑ ↓ ↑"},
-  {name:"Chasing Cars - Snow Patrol", chords:"A E D", pattern:"↓ ↑ ↓ ↑"},
-  {name:"Hey There Delilah - Plain White T's", chords:"D Bm G A", pattern:"↓ ↓ ↑ ↑ ↓"},
-  {name:"I'm Yours - Jason Mraz", chords:"G D Em C", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-  {name:"Hallelujah - Jeff Buckley", chords:"C Am C Am", pattern:"↓ ↑ ↓ ↑"},
-  {name:"Shape of You - Ed Sheeran", chords:"Am F C G", pattern:"↓ ↓ ↑ ↓ ↑"},
-  {name:"Photograph - Ed Sheeran", chords:"G D Em C", pattern:"↓ ↑ ↓ ↑"},
-  {name:"Nothing Else Matters - Metallica", chords:"Em D C G B7", pattern:"↓ ↓ ↑ ↑ ↓"},
-  {name:"Creep - Radiohead", chords:"G B C Cm", pattern:"↓ ↑ ↓ ↑"}
+{name:"Let It Be - The Beatles", chords:"C G Am F", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
+{name:"Perfect - Ed Sheeran", chords:"G Em C D", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
+{name:"Tears in Heaven - Eric Clapton", chords:"A E/G# F#m D A E", pattern:"↓ ↓ ↑ ↓ ↑"},
+{name:"Hotel California - Eagles", chords:"Bm F# A E G D Em F#", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
+{name:"Stand By Me - Ben E. King", chords:"G Em C D", pattern:"↓ ↑ ↓ ↑"},
+{name:"Love Yourself - Justin Bieber", chords:"C D Em D", pattern:"↓ ↑ ↓ ↑"},
+{name:"Yellow - Coldplay", chords:"B F# G#m E", pattern:"↓ ↓ ↑ ↓ ↑ ↓ ↑"},
+{name:"All of Me - John Legend", chords:"Em C G D", pattern:"↓ ↑ ↓ ↑"},
+{name:"Someone Like You - Adele", chords:"A E F#m D", pattern:"↓ ↓ ↑ ↓ ↑"},
+{name:"Chasing Cars - Snow Patrol", chords:"A E D", pattern:"↓ ↑ ↓ ↑"},
+{name:"Hey There Delilah - Plain White T's", chords:"D Bm G A", pattern:"↓ ↓ ↑ ↑ ↓"},
+{name:"I'm Yours - Jason Mraz", chords:"G D Em C", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
+{name:"Hallelujah - Jeff Buckley", chords:"C Am C Am", pattern:"↓ ↑ ↓ ↑"},
+{name:"Shape of You - Ed Sheeran", chords:"Am F C G", pattern:"↓ ↓ ↑ ↓ ↑"},
+{name:"Photograph - Ed Sheeran", chords:"G D Em C", pattern:"↓ ↑ ↓ ↑"},
+{name:"Nothing Else Matters - Metallica", chords:"Em D C G B7", pattern:"↓ ↓ ↑ ↑ ↓"},
+{name:"Creep - Radiohead", chords:"G B C Cm", pattern:"↓ ↑ ↓ ↑"}
 ];
 
 const songList = document.getElementById("song-list");
@@ -381,6 +394,76 @@ document.getElementById("start-mic").addEventListener("click", async ()=>{
     document.getElementById("strum-feedback").textContent = "Mic not supported.";
   }
 });
+
+// --- Navigation ---
+function goBack(){
+  chordsPanel.classList.add("hidden");
+  practicePanel.classList.add("hidden");
+  strumPanel.classList.add("hidden");
+  quizPanel.classList.add("hidden");
+  chordPracticePanel.classList.add("hidden");
+  mainMenu.classList.remove("hidden");
+}
+
+// --- Show panels ---
+function showChords(){ mainMenu.classList.add("hidden"); chordsPanel.classList.remove("hidden"); }
+function showPractice(){ mainMenu.classList.add("hidden"); practicePanel.classList.remove("hidden"); }
+function showStrum(){ mainMenu.classList.add("hidden"); strumPanel.classList.remove("hidden"); }
+function showQuiz(){ mainMenu.classList.add("hidden"); quizPanel.classList.remove("hidden"); }
+function showChordPractice(){ startChordPractice(); mainMenu.classList.add("hidden"); chordPracticePanel.classList.remove("hidden"); }
+
+// --- Chord Recognition Practice ---
+let practiceIndex=0, practiceScore=0, currentChord="", practiceTimer;
+const practiceImg=document.getElementById("practice-chord-img");
+const practiceOptions=document.getElementById("practice-options");
+const practiceScoreEl=document.getElementById("practice-score");
+const practiceTimerEl=document.getElementById("practice-timer");
+
+function startChordPractice(){
+  practiceIndex=0; practiceScore=0;
+  nextPracticeChord();
+}
+
+function nextPracticeChord(){
+  if(practiceIndex>=10){
+    practiceImg.innerHTML="";
+    practiceOptions.innerHTML="";
+    practiceScoreEl.textContent=`Practice Complete! Score: ${practiceScore}/10`;
+    return;
+  }
+  practiceIndex++;
+  currentChord = chords[Math.floor(Math.random()*chords.length)];
+  practiceImg.innerHTML=`<img src="image/${currentChord.toLowerCase().replace("#","sharp")}m.png" style="width:150px" onerror="this.onerror=null;this.style.display='none'">`;
+  // create 4 options
+  const opts = [currentChord];
+  while(opts.length<4){
+    const c = chords[Math.floor(Math.random()*chords.length)];
+    if(!opts.includes(c)) opts.push(c);
+  }
+  opts.sort(()=>Math.random()-0.5);
+  practiceOptions.innerHTML="";
+  opts.forEach(o=>{
+    const btn = document.createElement("button");
+    btn.textContent=o;
+    btn.onclick=()=>{
+      clearInterval(practiceTimer);
+      if(o===currentChord) practiceScore++;
+      nextPracticeChord();
+    };
+    practiceOptions.appendChild(btn);
+  });
+  // start 5 sec timer
+  let t=5; practiceTimerEl.textContent=t;
+  practiceTimer = setInterval(()=>{
+    t--;
+    practiceTimerEl.textContent=t;
+    if(t<=0){
+      clearInterval(practiceTimer);
+      nextPracticeChord();
+    }
+  },1000);
+}
+
 </script>
 </body>
 </html>
