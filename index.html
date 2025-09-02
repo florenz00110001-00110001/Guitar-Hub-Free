@@ -323,8 +323,8 @@ const songs = [
   {name:"Hotel California - Eagles", chords:"Bm F# A E G D Em F#", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
   {name:"Stand By Me - Ben E. King", chords:"G Em C D", pattern:"↓ ↑ ↓ ↑"},
   {name:"Love Yourself - Justin Bieber", chords:"C D Em D", pattern:"↓ ↑ ↓ ↑"},
-  {name:"Yellow - Coldplay", chords:"B F# G#m E", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-  {name:"All of Me- John Legend", chords:"Em C G D", pattern:"↓ ↑ ↓ ↑"},
+  {name:"Yellow - Coldplay", chords:"B F# G#m E", pattern:"↓ ↓ ↑ ↓ ↑ ↓ ↑"},
+  {name:"All of Me - John Legend", chords:"Em C G D", pattern:"↓ ↑ ↓ ↑"},
   {name:"Someone Like You - Adele", chords:"A E F#m D", pattern:"↓ ↓ ↑ ↓ ↑"},
   {name:"Chasing Cars - Snow Patrol", chords:"A E D", pattern:"↓ ↑ ↓ ↑"},
   {name:"Hey There Delilah - Plain White T's", chords:"D Bm G A", pattern:"↓ ↓ ↑ ↑ ↓"},
@@ -346,7 +346,12 @@ function renderSongs(filter=""){
     if(q && !s.name.toLowerCase().includes(q)) return;
     const div = document.createElement("div");
     div.className = "song";
-    div.innerHTML = `<div class="title">${s.name}</div><div class="meta">Chords: ${s.chords}<br>Strum: ${s.pattern}<div style="margin-top:8px"><button class="ghost" onclick="selectSong('${escapeHtml(s.name)}')">Select</button></div></div>`;
+    div.innerHTML = `<div class="title">${s.name}</div>
+      <div class="meta">Chords: ${s.chords}<br>Strum: ${s.pattern}
+        <div style="margin-top:8px">
+          <button class="ghost" onclick="selectSong('${escapeHtml(s.name)}')">Select</button>
+        </div>
+      </div>`;
     songList.appendChild(div);
   });
 }
@@ -376,113 +381,6 @@ document.getElementById("start-mic").addEventListener("click", async ()=>{
     document.getElementById("strum-feedback").textContent = "Mic not supported.";
   }
 });
-
-// --- Quiz ---
-const startQuizBtn = document.getElementById("start-quiz");
-const resetQuizBtn = document.getElementById("reset-quiz");
-const quizArea = document.getElementById("quiz-area");
-const quizImageDiv = document.getElementById("quiz-image");
-const quizOptionsDiv = document.getElementById("quiz-options");
-const quizProgress = document.getElementById("quiz-progress");
-const quizResult = document.getElementById("quiz-result");
-const timerEl = document.getElementById("timer");
-
-let quizQueue = [], qIndex = 0, qScore = 0, qTimer = null;
-
-function startQuiz(){
-  quizQueue = Array.from({length:10}, ()=> chords[Math.floor(Math.random()*chords.length)]);
-  qIndex = 0;
-  qScore = 0;
-  quizResult.classList.add("hidden");
-  startQuizBtn.style.display = "none";
-  resetQuizBtn.style.display = "inline-block";
-  quizArea.classList.remove("hidden");
-  loadQuizQuestion();
-}
-
-resetQuizBtn.addEventListener("click", ()=>{
-  startQuizBtn.style.display = "inline-block";
-  resetQuizBtn.style.display = "none";
-  quizArea.classList.add("hidden");
-  quizResult.classList.add("hidden");
-  clearInterval(qTimer);
-});
-
-function loadQuizQuestion(){
-  clearInterval(qTimer);
-  if(qIndex >= quizQueue.length){
-    endQuiz(); return;
-  }
-  const chord = quizQueue[qIndex];
-  quizImageDiv.innerHTML = `<img src="image/${chord.toLowerCase().replace("#","sharp")}m.png" style="width:150px" onerror="this.onerror=null;this.style.display='none'">`;
-  quizOptionsDiv.innerHTML = "";
-  const options = [chord];
-  while(options.length < 4){
-    const opt = chords[Math.floor(Math.random()*chords.length)];
-    if(!options.includes(opt)) options.push(opt);
-  }
-  options.sort(()=>Math.random()-0.5);
-  options.forEach(opt=>{
-    const btn = document.createElement("button");
-    btn.textContent = opt;
-    btn.onclick = ()=> checkAnswer(opt);
-    quizOptionsDiv.appendChild(btn);
-  });
-  quizProgress.textContent = `Question ${qIndex+1} of ${quizQueue.length}`;
-  let timeLeft = 5;
-  timerEl.textContent = timeLeft;
-  qTimer = setInterval(()=>{
-    timeLeft--;
-    timerEl.textContent = timeLeft;
-    if(timeLeft <= 0){ clearInterval(qTimer); qIndex++; loadQuizQuestion(); }
-  },1000);
-}
-
-function checkAnswer(opt){
-  clearInterval(qTimer);
-  if(opt === quizQueue[qIndex]) qScore++;
-  qIndex++;
-  loadQuizQuestion();
-}
-
-function endQuiz(){
-  quizArea.classList.add("hidden");
-  quizResult.classList.remove("hidden");
-  quizResult.textContent = `Quiz complete! Score: ${qScore} / ${quizQueue.length}`;
-}
-
-// --- Navigation ---
-function goBack(){
-  chordsPanel.classList.add("hidden");
-  practicePanel.classList.add("hidden");
-  strumPanel.classList.add("hidden");
-  quizPanel.classList.add("hidden");
-  mainMenu.classList.remove("hidden");
-}
-
-function showChords(){
-  mainMenu.classList.add("hidden");
-  chordsPanel.classList.remove("hidden");
-}
-function showPractice(){
-  mainMenu.classList.add("hidden");
-  practicePanel.classList.remove("hidden");
-}
-function showStrum(){
-  mainMenu.classList.add("hidden");
-  strumPanel.classList.remove("hidden");
-}
-function showQuiz(){
-  mainMenu.classList.add("hidden");
-  quizPanel.classList.remove("hidden");
-}
-
-function learnSongs(){
-  showStrum();
-}
-
-document.getElementById("start-quiz").addEventListener("click", startQuiz);
-
 </script>
 </body>
 </html>
