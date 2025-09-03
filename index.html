@@ -41,14 +41,16 @@
   .logo .hub{color:black;background:yellow;padding:4px 8px;border-radius:6px;margin-left:8px}
   .controls{display:flex;gap:8px;align-items:center}
   main{padding:92px 14px 40px; max-width:980px;margin:0 auto;}
-  button{padding:10px 16px;border-radius:8px;border:none;background:var(--accent);color:#000;font-weight:600;cursor:pointer;transition:0.2s;}
-  button:hover{opacity:0.9;}
+  button{padding:10px 16px;border-radius:8px;border:none;background:var(--accent);color:#000;font-weight:600;cursor:pointer;transition:all 0.2s}
+  button:hover{opacity:0.9}
   .back-btn{background:#444;color:#fff}
   .ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px}
-  .card{background:var(--muted);padding:14px;border-radius:10px;margin:12px 0;box-shadow:0 6px 16px rgba(0,0,0,0.6);transition:opacity 0.25s ease-in-out, transform 0.25s ease-in-out;}
-  .card.hidden{opacity:0;transform:translateY(20px);pointer-events:none;}
+  .card{background:var(--muted);padding:14px;border-radius:10px;margin:12px 0;box-shadow:0 6px 16px rgba(0,0,0,0.6);transition:all 0.3s ease}
+  .hidden{display:none;opacity:0;transition:opacity 0.3s ease}
+  .visible{display:block;opacity:1;transition:opacity 0.3s ease}
   .chord-grid{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:8px}
-  .chord-card{width:120px;background:#222;padding:10px;border-radius:10px;box-shadow:0 6px 14px rgba(0,0,0,0.6);text-align:center}
+  .chord-card{width:120px;background:#222;padding:10px;border-radius:10px;box-shadow:0 6px 14px rgba(0,0,0,0.6);text-align:center;transition:transform 0.2s}
+  .chord-card:hover{transform:scale(1.05)}
   .chord-card img{width:100px;height:auto;display:block;margin:8px auto}
   .timer{font-weight:700;color:gold;font-size:1.2rem;margin:8px}
   #quiz-options button{display:block;width:100%;margin:8px 0;background:#333;color:#fff;padding:10px;border-radius:8px}
@@ -61,14 +63,15 @@
   .song .title{font-weight:700}
   .song .meta{font-size:0.9rem;color:#ddd;margin-top:6px}
   #burger{font-size:1.4rem;background:none;border:none;color:#fff;cursor:pointer;padding:6px 8px}
-  #account-panel{position:fixed;top:58px;right:12px;width:300px;background:#141414;padding:12px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.6);display:none;z-index:1100;transition:opacity 0.25s;}
+  #account-panel{position:fixed;top:58px;right:12px;width:300px;background:#141414;padding:12px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.6);display:none;z-index:1100}
   #account-panel h4{margin:0 0 8px 0}
+  #strum-highlight{font-size:1.5rem;margin:12px 0;letter-spacing:6px}
   @media (max-width:600px){
     .logo{font-size:1.05rem}
     main{padding:96px 12px}
     .chord-card{width:96px}
   }
-  .light-mode{background:#fff;color:#fff} /* keep font white even in light mode */
+  .light-mode{background:#fff;color:#fff}
   .light-mode .logo .hub{background:orange;color:black}
   .light-mode button{color:#000}
 </style>
@@ -119,12 +122,12 @@
   <div id="main-menu" class="card hidden">
     <h2 style="margin-top:0">Main Menu</h2>
     <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
-      <button id="view-chords-btn">View Chords</button>
-      <button id="practice-chords-btn">Practice Chords</button>
-      <button id="practice-strum-btn">Practice Strum</button>
-      <button id="chord-quiz-btn">Chord Recognition Quiz</button>
-      <button id="learn-songs-btn" class="ghost">Learn Songs</button>
-      <button onclick="window.open('https://www.guitartuna.com/', '_blank')" class="ghost">Tune with GuitarTuna</button>
+      <button id="btn-chords">View Chords</button>
+      <button id="btn-practice">Practice Chords</button>
+      <button id="btn-strum">Practice Strum</button>
+      <button id="btn-quiz">Chord Recognition Quiz</button>
+      <button id="btn-learn-songs" class="ghost">Learn Songs</button>
+      <button id="btn-tune" class="ghost">Tune with GuitarTuna</button>
     </div>
   </div>
 
@@ -142,7 +145,6 @@
       <button id="play-chord" class="ghost">Play (placeholder)</button>
     </div>
     <p id="practice-feedback" style="margin-top:10px"></p>
-    </div>
     <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
 
@@ -154,6 +156,7 @@
       <p id="song-pattern" style="font-weight:700">Pattern: —</p>
       <button id="start-mic" class="ghost">Start Mic Test</button>
       <p id="strum-feedback" style="margin-top:8px"></p>
+      <div id="strum-highlight"></div>
     </div>
     <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
@@ -171,6 +174,13 @@
       <p id="quiz-progress" style="margin-top:8px"></p>
     </div>
     <div id="quiz-result" class="hidden" style="margin-top:12px;font-weight:700"></div>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
+
+  <div id="dashboard" class="card hidden">
+    <h2 style="margin-top:0">Dashboard</h2>
+    <p>Strum Accuracy: <span id="dash-strum">0%</span></p>
+    <p>Quiz Score History: <span id="dash-quiz">N/A</span></p>
     <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
 </main>
@@ -198,6 +208,7 @@
   const practicePanel = document.getElementById("practice");
   const strumPanel = document.getElementById("strum");
   const quizPanel = document.getElementById("quiz");
+  const dashboardPanel = document.getElementById("dashboard");
   const accountPanel = document.getElementById("account-panel");
 
   const emailInput = document.getElementById("email");
@@ -206,6 +217,7 @@
   const burgerBtn = document.getElementById("burger");
   const accountEmail = document.getElementById("account-email");
 
+  // Dark Mode
   document.getElementById("dark-toggle").addEventListener("click", ()=> {
     document.body.classList.toggle("light-mode");
   });
@@ -231,7 +243,7 @@
   document.getElementById("login-btn").addEventListener("click", async ()=>{
     const email = emailInput.value.trim();
     const pw = passwordInput.value;
-    if(!email || !pw){ authMsg.style.color="#f88"; authMsg.textContent = "Enter email & password to sign in."; return; }
+    if(!email || !pw){ authMsg.textContent = "Enter email & password to sign in."; authMsg.style.color="#f88"; return; }
     try{
       await signInWithEmailAndPassword(auth, email, pw);
       authMsg.style.color="#8f8"; authMsg.textContent = "Signed in.";
@@ -239,7 +251,8 @@
   });
 
   document.getElementById("continue-btn").addEventListener("click", ()=>{
-    transitionPanels(loginScreen, mainMenu);
+    loginScreen.classList.add("hidden");
+    mainMenu.classList.remove("hidden");
     accountEmail.textContent = "Guest";
   });
 
@@ -254,13 +267,7 @@
   });
 
   document.getElementById("signout-btn").addEventListener("click", async ()=>{
-    try{ 
-      await signOut(auth); 
-      transitionPanels(mainMenu, loginScreen);
-      accountPanel.style.display='none'; 
-      accountEmail.textContent='Not signed in'; 
-      authMsg.textContent=''; 
-    }
+    try{ await signOut(auth); loginScreen.classList.remove("hidden"); mainMenu.classList.add("hidden"); accountPanel.style.display='none'; accountEmail.textContent='Not signed in'; authMsg.textContent=''; }
     catch(e){ console.error(e); }
   });
 
@@ -280,7 +287,7 @@
     try{
       await deleteUser(auth.currentUser);
       alert("Account deleted.");
-      transitionPanels(mainMenu, loginScreen);
+      loginScreen.classList.remove("hidden"); mainMenu.classList.add("hidden");
     }catch(e){
       alert("Delete failed: "+e.message);
     }
@@ -289,208 +296,192 @@
   onAuthStateChanged(auth, (user)=>{
     if(user){
       accountEmail.textContent = user.email || "User";
-      transitionPanels(loginScreen, mainMenu);
+      loginScreen.classList.add("hidden");
+      mainMenu.classList.remove("hidden");
       authMsg.textContent = "";
     }
   });
 
-  // --- Panel transition ---
-  function transitionPanels(from, to){
-    from.classList.add("hidden");
-    setTimeout(()=>{ to.classList.remove("hidden"); }, 50);
-  }
-
-  // --- Main menu buttons ---
-  document.getElementById("view-chords-btn").addEventListener("click", ()=> transitionPanels(mainMenu, chordsPanel));
-  document.getElementById("practice-chords-btn").addEventListener("click", ()=> transitionPanels(mainMenu, practicePanel));
-  document.getElementById("practice-strum-btn").addEventListener("click", ()=> transitionPanels(mainMenu, strumPanel));
-  document.getElementById("chord-quiz-btn").addEventListener("click", ()=> transitionPanels(mainMenu, quizPanel));
-  document.getElementById("learn-songs-btn").addEventListener("click", ()=> alert("Song learning module not implemented yet."));
-  document.getElementById("show-dashboard").addEventListener("click", ()=> alert("Dashboard placeholder — not implemented."));
-
-  // --- Chords ---
-  const chords = ["C","D","E","F","G","A","B","Am","Dm","Em","F#m","Bm","Cmaj7","C#m","G#m"];
-  const chordGrid = document.getElementById("chord-grid");
-  function populateChordGrid(){
-    chordGrid.innerHTML = "";
-    chords.forEach(chord=>{
-      const card = document.createElement("div");
-      card.className = "chord-card";
-      const fname = chord.toLowerCase().replace("#","sharp").replace("+","plus") + ".png";
-      card.innerHTML = `<div style="font-weight:700">${chord}</div><img src="images/${fname}" alt="${chord} chord" onerror="this.onerror=null;this.src='images/placeholder.png'">`;
-      chordGrid.appendChild(card);
-    });
-  }
-  populateChordGrid();
-
-  // --- Practice ---
-  const practiceDisplay = document.getElementById("practice-chord-display");
-  document.getElementById("next-chord").addEventListener("click", ()=> {
-    const ch = chords[Math.floor(Math.random()*chords.length)];
-    practiceDisplay.textContent = ch;
-    document.getElementById("practice-feedback").innerHTML = `<img src="images/${ch.toLowerCase().replace("#","sharp")}.png" style="width:150px" onerror="this.onerror=null;this.style.display='none'">`;
+  // --- Main Menu Buttons ---
+  document.getElementById("btn-chords").addEventListener("click", ()=>{
+    loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); chordsPanel.classList.remove("hidden");
+  });
+  document.getElementById("btn-practice").addEventListener("click", ()=>{
+    loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); practicePanel.classList.remove("hidden");
+  });
+  document.getElementById("btn-strum").addEventListener("click", ()=>{
+    loginScreen.classList.add("hidden");
+    mainMenu.classList.add("hidden");
+    strumPanel.classList.remove("hidden");
   });
 
-  // --- Song List & Strum ---
-  const songs = [
-    {name:"Wonderwall - Oasis", chords:"Em7 G Dsus4 A7sus4", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-    {name:"Knockin' on Heaven's Door - Bob Dylan", chords:"G D Am G D C", pattern:"↓ ↓ ↑ ↓ ↑"},
-    {name:"Zombie - The Cranberries", chords:"Em C G D", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Let It Be - The Beatles", chords:"C G Am F", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-    {name:"Perfect - Ed Sheeran", chords:"G Em C D", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-    {name:"Tears in Heaven - Eric Clapton", chords:"A E/G# F#m D A E", pattern:"↓ ↓ ↑ ↓ ↑"},
-    {name:"Hotel California - Eagles", chords:"Bm F# A E G D Em F#", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-    {name:"Stand By Me - Ben E. King", chords:"G Em C D", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Love Yourself - Justin Bieber", chords:"C D Em D", pattern:"↓ ↑ ↓ ↑"},
-    {name:"All of Me - John Legend", chords:"Em C G D", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Someone Like You - Adele", chords:"A E F#m D", pattern:"↓ ↓ ↑ ↓ ↑"},
-    {name:"Chasing Cars - Snow Patrol", chords:"A E D", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Hey There Delilah - Plain White T's", chords:"D Bm G A", pattern:"↓ ↓ ↑ ↑ ↓"},
-    {name:"I'm Yours - Jason Mraz", chords:"G D Em C", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-    {name:"Hallelujah - Jeff Buckley", chords:"C Am C Am", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Shape of You - Ed Sheeran", chords:"Am F C G", pattern:"↓ ↓ ↑ ↓ ↑"},
-    {name:"Photograph - Ed Sheeran", chords:"G D Em C", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Nothing Else Matters - Metallica", chords:"Em D C G B7", pattern:"↓ ↓ ↑ ↑ ↓"},
-    {name:"Creep - Radiohead", chords:"G B C Cm", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Yellow - Coldplay", chords:"B F# G#m E", pattern:"↓ ↓ ↑ ↓ ↑ ↓ ↑"}
-];
-
-const songList = document.getElementById("song-list");
-const songSearch = document.getElementById("song-search");
-
-function renderSongs(filter=""){
-  songList.innerHTML = "";
-  const q = filter.trim().toLowerCase();
-  songs.forEach(s=>{
-    if(q && !s.name.toLowerCase().includes(q)) return;
-    const div = document.createElement("div");
-    div.className = "song";
-    div.innerHTML = `<div class="title">${s.name}</div>
-      <div class="meta">Chords: ${s.chords}<br>Strum: ${s.pattern}
-        <div style="margin-top:8px">
-          <button class="ghost" onclick="selectSong('${escapeHtml(s.name)}')">Select</button>
-        </div>
-      </div>`;
-    songList.appendChild(div);
+  document.getElementById("btn-quiz").addEventListener("click", ()=>{
+    loginScreen.classList.add("hidden");
+    mainMenu.classList.add("hidden");
+    quizPanel.classList.remove("hidden");
   });
-}
 
-function escapeHtml(str){ return str.replace(/'/g,"\\'").replace(/\"/g,"\\\""); }
+  document.getElementById("show-dashboard").addEventListener("click", ()=>{
+    loginScreen.classList.add("hidden");
+    mainMenu.classList.add("hidden");
+    chordsPanel.classList.add("hidden");
+    practicePanel.classList.add("hidden");
+    strumPanel.classList.add("hidden");
+    quizPanel.classList.add("hidden");
+    dashboardPanel.classList.remove("hidden");
+    accountPanel.style.display = 'none';
+  });
 
-songSearch && songSearch.addEventListener("input", ()=> renderSongs(songSearch.value));
-renderSongs();
+  function goBack(){
+    chordsPanel.classList.add("hidden");
+    practicePanel.classList.add("hidden");
+    strumPanel.classList.add("hidden");
+    quizPanel.classList.add("hidden");
+    dashboardPanel.classList.add("hidden");
+    mainMenu.classList.remove("hidden");
+  }
 
-function selectSong(name){
-  const song = songs.find(s=>s.name===name) || songs.find(s=>s.name===decodeURIComponent(name));
-  if(!song) return;
-  document.getElementById("song-pattern").textContent = `Pattern: ${song.pattern} — Chords: ${song.chords}`;
-  document.getElementById("strum-feedback").textContent = "";
-}
+  // --- Practice Chords Logic ---
+  const chords = ["C","D","E","F","G","A","B"];
+  let currentPracticeChord = null;
+  document.getElementById("next-chord").addEventListener("click", ()=>{
+    currentPracticeChord = chords[Math.floor(Math.random()*chords.length)];
+    document.getElementById("practice-chord-display").textContent = currentPracticeChord;
+    document.getElementById("practice-feedback").textContent = "";
+  });
 
-// --- Microphone & sound detector ---
-document.getElementById("start-mic").addEventListener("click", async ()=>{
-  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
-    try{
-      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const analyser = audioContext.createAnalyser();
-      const source = audioContext.createMediaStreamSource(stream);
-      source.connect(analyser);
-      analyser.fftSize = 2048;
-      const dataArray = new Uint8Array(analyser.fftSize);
-      
-      const detectSound = () => {
-        analyser.getByteTimeDomainData(dataArray);
-        const max = Math.max(...dataArray);
-        const min = Math.min(...dataArray);
-        const amplitude = max - min;
-        const feedback = document.getElementById("strum-feedback");
-        feedback.textContent = amplitude > 30 ? "Strum detected — amplitude high" : "Strum low or silent";
-        requestAnimationFrame(detectSound);
-      };
-      detectSound();
-    }catch(e){
-      document.getElementById("strum-feedback").textContent = "Mic access denied.";
+  // --- Chord Recognition Quiz ---
+  const quizChords = ["C","D","E","F","G","A","B"];
+  let quizScore = 0;
+  let quizCount = 0;
+  const quizTotal = 10;
+  const quizArea = document.getElementById("quiz-area");
+  const quizResult = document.getElementById("quiz-result");
+  const quizImage = document.getElementById("quiz-image");
+  const quizOptions = document.getElementById("quiz-options");
+  const timerEl = document.getElementById("timer");
+  let quizTimer;
+  let currentQuizChord;
+
+  document.getElementById("start-quiz").addEventListener("click", ()=>{
+    quizScore = 0;
+    quizCount = 0;
+    quizResult.classList.add("hidden");
+    quizArea.classList.remove("hidden");
+    nextQuizChord();
+  });
+
+  function nextQuizChord(){
+    if(quizCount >= quizTotal){
+      quizArea.classList.add("hidden");
+      quizResult.classList.remove("hidden");
+      quizResult.textContent = `Quiz Completed! Score: ${quizScore}/${quizTotal}`;
+      return;
     }
-  } else {
-    document.getElementById("strum-feedback").textContent = "Mic not supported.";
-  }
-});
-
-// --- Panel navigation ---
-function showChords(){ loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); chordsPanel.classList.remove("hidden"); }
-function showPractice(){ loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); practicePanel.classList.remove("hidden"); }
-function showStrum(){ loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); strumPanel.classList.remove("hidden"); }
-function showQuiz(){ loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); quizPanel.classList.remove("hidden"); }
-function goBack(){ chordsPanel.classList.add("hidden"); practicePanel.classList.add("hidden"); strumPanel.classList.add("hidden"); quizPanel.classList.add("hidden"); mainMenu.classList.remove("hidden"); }
-function learnSongs(){ alert("Song learning module not implemented yet."); }
-
-// --- Chord recognition quiz (simplified) ---
-const quizChords = ["C","D","E","F","G","A","B","Am","Dm","Em","F#m","Bm"];
-const quizImage = document.getElementById("quiz-image");
-const quizOptions = document.getElementById("quiz-options");
-const timerEl = document.getElementById("timer");
-const quizArea = document.getElementById("quiz-area");
-const quizResult = document.getElementById("quiz-result");
-const startQuizBtn = document.getElementById("start-quiz");
-const resetQuizBtn = document.getElementById("reset-quiz");
-let score = 0;
-let quizCount = 0;
-let currentAnswer = "";
-let timerInterval;
-
-function nextQuizChord(){
-  if(quizCount>=10){ showQuizResult(); return; }
-  const ch = quizChords[Math.floor(Math.random()*quizChords.length)];
-  currentAnswer = ch;
-  quizImage.textContent = ch; // placeholder for chord image
-  quizOptions.innerHTML = "";
-  let options = [...quizChords].sort(()=>0.5-Math.random()).slice(0,3);
-  if(!options.includes(ch)) options[Math.floor(Math.random()*3)] = ch;
-  options.forEach(o=>{
-    const btn = document.createElement("button");
-    btn.textContent = o;
-    btn.addEventListener("click", ()=>{
-      if(o===currentAnswer) score++;
-      quizCount++;
-      clearInterval(timerInterval);
-      nextQuizChord();
+    currentQuizChord = quizChords[Math.floor(Math.random()*quizChords.length)];
+    quizImage.textContent = currentQuizChord; // placeholder, could be img
+    quizOptions.innerHTML = "";
+    const choices = shuffleArray(quizChords).slice(0,4);
+    if(!choices.includes(currentQuizChord)) choices[Math.floor(Math.random()*4)] = currentQuizChord;
+    choices.forEach(c=>{
+      const btn = document.createElement("button");
+      btn.textContent = c;
+      btn.addEventListener("click", ()=>{
+        if(c===currentQuizChord) quizScore++;
+        quizCount++;
+        nextQuizChord();
+      });
+      quizOptions.appendChild(btn);
     });
-    quizOptions.appendChild(btn);
-  });
-  let time = 5;
-  timerEl.textContent = time;
-  timerInterval = setInterval(()=>{
-    time--;
+    startQuizTimer();
+  }
+
+  function startQuizTimer(){
+    let time = 5;
     timerEl.textContent = time;
-    if(time<=0){ clearInterval(timerInterval); quizCount++; nextQuizChord(); }
-  }, 1000);
-}
+    clearInterval(quizTimer);
+    quizTimer = setInterval(()=>{
+      time--;
+      timerEl.textContent = time;
+      if(time<=0){
+        clearInterval(quizTimer);
+        quizCount++;
+        nextQuizChord();
+      }
+    },1000);
+  }
 
-function showQuizResult(){
-  quizArea.classList.add("hidden");
-  quizResult.classList.remove("hidden");
-  quizResult.textContent = `Quiz finished. Score: ${score}/10`;
-  startQuizBtn.style.display="inline-block";
-  resetQuizBtn.style.display="none";
-  score=0; quizCount=0;
-}
+  function shuffleArray(array){
+    return array.sort(()=>Math.random()-0.5);
+  }
 
-startQuizBtn.addEventListener("click", ()=>{
-  startQuizBtn.style.display="none";
-  resetQuizBtn.style.display="inline-block";
-  quizArea.classList.remove("hidden");
-  quizResult.classList.add("hidden");
-  nextQuizChord();
-});
+  // --- Strum Practice with Accuracy ---
+  let audioContext, analyser, dataArray, source;
+  let currentPattern = ["↓","↓","↑","↓"]; // example pattern
+  let currentStrumIndex = 0;
+  let hits = 0;
+  let totalStrums = 0;
+  let strumActive = false;
+  const strumFeedback = document.getElementById("strum-feedback");
+  const startMicBtn = document.getElementById("start-mic");
 
-resetQuizBtn.addEventListener("click", ()=>{
-  score=0; quizCount=0;
-  startQuizBtn.style.display="inline-block";
-  resetQuizBtn.style.display="none";
-  quizArea.classList.add("hidden");
-  quizResult.classList.add("hidden");
-});
+  async function startMic(){
+    if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    source = audioContext.createMediaStreamSource(stream);
+    analyser = audioContext.createAnalyser();
+    source.connect(analyser);
+    analyser.fftSize = 2048;
+    const bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+
+    currentStrumIndex = 0;
+    hits = 0;
+    totalStrums = 0;
+    strumActive = true;
+    highlightStrum();
+    strumFeedback.textContent = "Strum the pattern!";
+    requestAnimationFrame(checkStrum);
+  }
+
+  function checkStrum(){
+    if(!strumActive) return;
+    
+    analyser.getByteTimeDomainData(dataArray);
+    const avg = dataArray.reduce((a,v)=>a+Math.abs(v-128),0)/dataArray.length;
+    let detected = null;
+
+    if(avg > 10) detected = "↓"; // placeholder detection
+
+    if(detected){
+      totalStrums++;
+      if(detected === currentPattern[currentStrumIndex]){
+        hits++;
+        currentStrumIndex++;
+        highlightStrum();
+        strumFeedback.textContent = "Good!";
+      } else {
+        strumFeedback.textContent = "Wrong strum!";
+      }
+
+      const accuracy = totalStrums > 0 ? Math.round((hits/totalStrums)*100) : 0;
+      dashboardPanel.querySelector("#dash-strum").textContent = accuracy + "%";
+
+      if(currentStrumIndex >= currentPattern.length){
+        strumFeedback.textContent = "Pattern completed!";
+        strumActive = false;
+        return;
+      }
+    }
+    requestAnimationFrame(checkStrum);
+  }
+
+  function highlightStrum(){
+    const highlight = document.getElementById("strum-highlight");
+    highlight.textContent = currentPattern.map((s,i)=>i===currentStrumIndex?`[${s}]`:s).join(" ");
+  }
+
+  startMicBtn.addEventListener("click", startMic);
 
 </script>
 </body>
