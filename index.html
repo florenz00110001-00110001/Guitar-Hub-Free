@@ -38,7 +38,7 @@
   }
   .logo{display:flex;align-items:center;font-weight:700;font-size:1.25rem}
   .logo .guitar{color:#fff}
-  .logo .hub{color:black;background:orange;padding:4px 8px;border-radius:6px;margin-left:8px}
+  .logo .hub{color:black;background:yellow;padding:4px 8px;border-radius:6px;margin-left:8px}
   .controls{display:flex;gap:8px;align-items:center}
   main{padding:92px 14px 40px; max-width:980px;margin:0 auto;}
   button{padding:10px 16px;border-radius:8px;border:none;background:var(--accent);color:#000;font-weight:600;cursor:pointer}
@@ -391,68 +391,14 @@
 
   function learnSongs(){ alert("Song learning module not implemented yet."); }
 
-  // --- Chord recognition quiz (simplified) ---
-  const quizChords = ["C","D","E","F","G","A","B","Am","Dm","Em","F#m","Bm"];
-  const quizImage = document.getElementById("quiz-image");
-  const quizOptions = document.getElementById("quiz-options");
-  const timerEl = document.getElementById("timer");
-  const quizArea = document.getElementById("quiz-area");
-  const quizResult = document.getElementById("quiz-result");
-  const startQuizBtn = document.getElementById("start-quiz");
-  const resetQuizBtn = document.getElementById("reset-quiz");
-  let score = 0;
-  let quizCount = 0;
-  let currentAnswer = "";
-  let timerInterval;
-
-  function nextQuizChord(){
-    if(quizCount>=10){ showQuizResult(); return; }
-    const ch = quizChords[Math.floor(Math.random()*quizChords.length)];
-    currentAnswer = ch;
-    quizImage.textContent = ch; // placeholder for chord image
-    quizOptions.innerHTML = "";
-    let options = [...quizChords].sort(()=>0.5-Math.random()).slice(0,3);
-    if(!options.includes(ch)) options[Math.floor(Math.random()*3)] = ch;
-    options.forEach(o=>{
-      const btn = document.createElement("button");
-      btn.textContent = o;
-      btn.onclick = ()=>{
-        if(o===currentAnswer) score++;
-        quizCount++;
-        clearInterval(timerInterval);
-        nextQuizChord();
-      };
-      quizOptions.appendChild(btn);
-    });
-    let time = 5;
-    timerEl.textContent = time;
-    timerInterval = setInterval(()=>{ time--; timerEl.textContent=time; if(time<=0){ clearInterval(timerInterval); quizCount++; nextQuizChord(); }}, 1000);
-  }
-
-  function showQuizResult(){
-    quizArea.classList.add("hidden");
-    quizResult.classList.remove("hidden");
-    quizResult.textContent = `Quiz finished. Score: ${score}/10`;
-    startQuizBtn.style.display="inline-block";
-    resetQuizBtn.style.display="none";
-    score=0; quizCount=0;
-  }
-
-  startQuizBtn.addEventListener("click", ()=>{
-    startQuizBtn.style.display="none";
-    resetQuizBtn.style.display="inline-block";
-    quizArea.classList.remove("hidden");
-    quizResult.classList.add("hidden");
-    nextQuizChord();
-  });
-
-  resetQuizBtn.addEventListener("click", ()=>{
-    score=0; quizCount=0;
-    startQuizBtn.style.display="inline-block";
-    resetQuizBtn.style.display="none";
-    quizArea.classList.add("hidden");
-    quizResult.classList.add("hidden");
-  });
+  // --- Make functions global so main menu buttons work ---
+  window.showChords = showChords;
+  window.showPractice = showPractice;
+  window.showStrum = showStrum;
+  window.showQuiz = showQuiz;
+  window.goBack = goBack;
+  window.learnSongs = learnSongs;
+  window.selectSong = selectSong;
 </script>
 </body>
 </html>
