@@ -101,6 +101,7 @@
 </div>
 
 <main>
+  <!-- Login -->
   <div id="login-screen" class="card">
     <h1 style="margin:0 0 8px 0">Login</h1>
     <input id="email" type="email" placeholder="Email" autocomplete="username">
@@ -119,6 +120,7 @@
     <p id="auth-msg" style="color:#f88;margin-top:8px"></p>
   </div>
 
+  <!-- Main Menu -->
   <div id="main-menu" class="card hidden">
     <h2 style="margin-top:0">Main Menu</h2>
     <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
@@ -131,12 +133,14 @@
     </div>
   </div>
 
+  <!-- Chords -->
   <div id="chords" class="card hidden">
     <h2 style="margin-top:0">Basic Chords</h2>
     <div class="chord-grid" id="chord-grid"></div>
     <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
 
+  <!-- Practice -->
   <div id="practice" class="card hidden">
     <h2 style="margin-top:0">Practice Chords (Random)</h2>
     <div id="practice-chord-display" style="font-size:2rem;margin:16px"></div>
@@ -148,6 +152,7 @@
     <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
 
+  <!-- Strum -->
   <div id="strum" class="card hidden">
     <h2 style="margin-top:0">Practice Strum</h2>
     <input id="song-search" type="text" placeholder="Search songs..." style="margin-bottom:12px" />
@@ -161,6 +166,7 @@
     <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
 
+  <!-- Quiz -->
   <div id="quiz" class="card hidden">
     <h2 style="margin-top:0">Chord Recognition Quiz</h2>
     <div style="margin-bottom:12px">
@@ -177,6 +183,7 @@
     <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
 
+  <!-- Dashboard -->
   <div id="dashboard" class="card hidden">
     <h2 style="margin-top:0">Dashboard</h2>
     <p>Strum Accuracy: <span id="dash-strum">0%</span></p>
@@ -186,6 +193,7 @@
 </main>
 
 <script type="module">
+  /* === FIREBASE === */
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, updatePassword, deleteUser } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
@@ -202,6 +210,7 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
+  /* === ELEMENTS === */
   const loginScreen = document.getElementById("login-screen");
   const mainMenu = document.getElementById("main-menu");
   const chordsPanel = document.getElementById("chords");
@@ -217,7 +226,7 @@
   const burgerBtn = document.getElementById("burger");
   const accountEmail = document.getElementById("account-email");
 
-  // Dark Mode
+  /* === THEME === */
   document.getElementById("dark-toggle").addEventListener("click", ()=> {
     document.body.classList.toggle("light-mode");
   });
@@ -230,6 +239,7 @@
     passwordInput.type = passwordInput.type === "password" ? "text" : "password";
   });
 
+  /* === AUTH === */
   document.getElementById("signup-btn").addEventListener("click", async ()=>{
     const email = emailInput.value.trim();
     const pw = passwordInput.value;
@@ -302,9 +312,10 @@
     }
   });
 
-  // --- Main Menu Buttons ---
+  /* === MAIN MENU === */
   document.getElementById("btn-chords").addEventListener("click", ()=>{
     loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); chordsPanel.classList.remove("hidden");
+    renderChords();
   });
   document.getElementById("btn-practice").addEventListener("click", ()=>{
     loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); practicePanel.classList.remove("hidden");
@@ -312,177 +323,170 @@
   document.getElementById("btn-strum").addEventListener("click", ()=>{
     loginScreen.classList.add("hidden");
     mainMenu.classList.add("hidden");
-    strumPanel.classList.remove("hidden");
-  });
+    strumScreen.classList.remove("hidden");
+});
 
-  document.getElementById("btn-quiz").addEventListener("click", ()=>{
-    loginScreen.classList.add("hidden");
-    mainMenu.classList.add("hidden");
-    quizPanel.classList.remove("hidden");
-  });
-
-  document.getElementById("show-dashboard").addEventListener("click", ()=>{
-    loginScreen.classList.add("hidden");
-    mainMenu.classList.add("hidden");
-    chordsPanel.classList.add("hidden");
-    practicePanel.classList.add("hidden");
-    strumPanel.classList.add("hidden");
-    quizPanel.classList.add("hidden");
-    dashboardPanel.classList.remove("hidden");
-    accountPanel.style.display = 'none';
-  });
-
-  function goBack(){
-    chordsPanel.classList.add("hidden");
-    practicePanel.classList.add("hidden");
-    strumPanel.classList.add("hidden");
-    quizPanel.classList.add("hidden");
-    dashboardPanel.classList.add("hidden");
-    mainMenu.classList.remove("hidden");
-  }
-
-  // --- Practice Chords Logic ---
-  const chords = ["C","D","E","F","G","A","B"];
-  let currentPracticeChord = null;
-  document.getElementById("next-chord").addEventListener("click", ()=>{
-    currentPracticeChord = chords[Math.floor(Math.random()*chords.length)];
-    document.getElementById("practice-chord-display").textContent = currentPracticeChord;
-    document.getElementById("practice-feedback").textContent = "";
-  });
-
-  // --- Chord Recognition Quiz ---
-  const quizChords = ["C","D","E","F","G","A","B"];
-  let quizScore = 0;
-  let quizCount = 0;
-  const quizTotal = 10;
-  const quizArea = document.getElementById("quiz-area");
-  const quizResult = document.getElementById("quiz-result");
-  const quizImage = document.getElementById("quiz-image");
-  const quizOptions = document.getElementById("quiz-options");
-  const timerEl = document.getElementById("timer");
-  let quizTimer;
-  let currentQuizChord;
-
-  document.getElementById("start-quiz").addEventListener("click", ()=>{
-    quizScore = 0;
-    quizCount = 0;
-    quizResult.classList.add("hidden");
-    quizArea.classList.remove("hidden");
-    nextQuizChord();
-  });
-
-  function nextQuizChord(){
-    if(quizCount >= quizTotal){
-      quizArea.classList.add("hidden");
-      quizResult.classList.remove("hidden");
-      quizResult.textContent = `Quiz Completed! Score: ${quizScore}/${quizTotal}`;
-      return;
-    }
-    currentQuizChord = quizChords[Math.floor(Math.random()*quizChords.length)];
-    quizImage.textContent = currentQuizChord; // placeholder, could be img
-    quizOptions.innerHTML = "";
-    const choices = shuffleArray(quizChords).slice(0,4);
-    if(!choices.includes(currentQuizChord)) choices[Math.floor(Math.random()*4)] = currentQuizChord;
-    choices.forEach(c=>{
-      const btn = document.createElement("button");
-      btn.textContent = c;
-      btn.addEventListener("click", ()=>{
-        if(c===currentQuizChord) quizScore++;
-        quizCount++;
-        nextQuizChord();
-      });
-      quizOptions.appendChild(btn);
+// back buttons
+document.querySelectorAll(".btn-back").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+        document.querySelectorAll("section").forEach(sec=>sec.classList.add("hidden"));
+        mainMenu.classList.remove("hidden");
     });
-    startQuizTimer();
-  }
+});
 
-  function startQuizTimer(){
-    let time = 5;
-    timerEl.textContent = time;
-    clearInterval(quizTimer);
-    quizTimer = setInterval(()=>{
-      time--;
-      timerEl.textContent = time;
-      if(time<=0){
-        clearInterval(quizTimer);
-        quizCount++;
-        nextQuizChord();
-      }
-    },1000);
-  }
+// --------- CHORDS VIEW ---------
+const chordGrid = document.getElementById("chord-grid");
+const chords = [
+    { name:"C", file:"c.png"},
+    { name:"F#", file:"fsharp.png"},
+    { name:"F#m", file:"fsharpm.png"},
+    { name:"D", file:"d.png"},
+    { name:"E", file:"e.png"},
+    { name:"Em", file:"em.png"},
+    { name:"G", file:"g.png"},
+    { name:"A", file:"a.png"},
+    { name:"Am", file:"am.png"},
+    { name:"Bm", file:"bm.png"}
+];
 
-  function shuffleArray(array){
-    return array.sort(()=>Math.random()-0.5);
-  }
+function loadChords(){
+    chordGrid.innerHTML = "";
+    chords.forEach(ch=>{
+        const card = document.createElement("div");
+        card.className = "chord-card";
+        card.innerHTML = `
+            <p style="font-weight:700">${ch.name}</p>
+            <img src="image/${ch.file}" alt="${ch.name}">
+        `;
+        chordGrid.appendChild(card);
+    });
+}
+loadChords();
 
-  // --- Strum Practice with Accuracy ---
-  let audioContext, analyser, dataArray, source;
-  let currentPattern = ["↓","↓","↑","↓"]; // example pattern
-  let currentStrumIndex = 0;
-  let hits = 0;
-  let totalStrums = 0;
-  let strumActive = false;
-  const strumFeedback = document.getElementById("strum-feedback");
-  const startMicBtn = document.getElementById("start-mic");
+// -------- PRACTICE CHORDS --------
+const practiceBtn = document.getElementById("practice-btn");
+const chordDisplay = document.getElementById("chord-display");
+let currentChord = null;
 
-  async function startMic(){
-    if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-    source = audioContext.createMediaStreamSource(stream);
-    analyser = audioContext.createAnalyser();
-    source.connect(analyser);
-    analyser.fftSize = 2048;
-    const bufferLength = analyser.frequencyBinCount;
-    dataArray = new Uint8Array(bufferLength);
+practiceBtn.addEventListener("click", ()=>{
+    currentChord = chords[Math.floor(Math.random()*chords.length)];
+    chordDisplay.innerHTML = `
+        <p>Play this chord:</p>
+        <h2>${currentChord.name}</h2>
+        <img src="image/${currentChord.file}" alt="${currentChord.name}">
+    `;
+});
 
-    currentStrumIndex = 0;
-    hits = 0;
-    totalStrums = 0;
-    strumActive = true;
-    highlightStrum();
-    strumFeedback.textContent = "Strum the pattern!";
-    requestAnimationFrame(checkStrum);
-  }
+// -------- QUIZ --------
+const startQuizBtn = document.getElementById("start-quiz");
+const quizQuestion = document.getElementById("quiz-question");
+const quizOptions = document.getElementById("quiz-options");
+const quizFeedback = document.getElementById("quiz-feedback");
+let quizScore = 0;
+let quizRound = 0;
 
-  function checkStrum(){
-    if(!strumActive) return;
-    
-    analyser.getByteTimeDomainData(dataArray);
-    const avg = dataArray.reduce((a,v)=>a+Math.abs(v-128),0)/dataArray.length;
-    let detected = null;
+startQuizBtn.addEventListener("click", ()=>{
+    quizScore = 0;
+    quizRound = 0;
+    nextQuestion();
+});
 
-    if(avg > 10) detected = "↓"; // placeholder detection
-
-    if(detected){
-      totalStrums++;
-      if(detected === currentPattern[currentStrumIndex]){
-        hits++;
-        currentStrumIndex++;
-        highlightStrum();
-        strumFeedback.textContent = "Good!";
-      } else {
-        strumFeedback.textContent = "Wrong strum!";
-      }
-
-      const accuracy = totalStrums > 0 ? Math.round((hits/totalStrums)*100) : 0;
-      dashboardPanel.querySelector("#dash-strum").textContent = accuracy + "%";
-
-      if(currentStrumIndex >= currentPattern.length){
-        strumFeedback.textContent = "Pattern completed!";
-        strumActive = false;
+function nextQuestion(){
+    if(quizRound>=5){
+        quizFeedback.textContent = "Quiz finished! Your score: "+quizScore+"/5";
         return;
-      }
     }
-    requestAnimationFrame(checkStrum);
-  }
+    quizRound++;
+    const correct = chords[Math.floor(Math.random()*chords.length)];
+    quizQuestion.innerHTML = `
+        <img src="image/${correct.file}" alt="${correct.name}" style="width:150px">
+    `;
+    quizOptions.innerHTML = "";
+    const opts = [correct];
+    while(opts.length<4){
+        const rand = chords[Math.floor(Math.random()*chords.length)];
+        if(!opts.includes(rand)) opts.push(rand);
+    }
+    shuffle(opts).forEach(opt=>{
+        const b = document.createElement("button");
+        b.textContent = opt.name;
+        b.onclick = ()=>{
+            if(opt.name===correct.name){
+                quizFeedback.textContent = "Correct!";
+                quizScore++;
+            } else {
+                quizFeedback.textContent = "Wrong! Answer: "+correct.name;
+            }
+            nextQuestion();
+        };
+        quizOptions.appendChild(b);
+    });
+}
 
-  function highlightStrum(){
-    const highlight = document.getElementById("strum-highlight");
-    highlight.textContent = currentPattern.map((s,i)=>i===currentStrumIndex?`[${s}]`:s).join(" ");
-  }
+function shuffle(arr){
+    return arr.sort(()=>Math.random()-0.5);
+}
 
-  startMicBtn.addEventListener("click", startMic);
+// -------- STRUM DETECTOR --------
+const micBtn = document.getElementById("start-mic");
+const strumPattern = document.getElementById("strum-pattern");
+const feedback = document.getElementById("practice-feedback");
+let audioCtx, analyser, dataArray;
 
+const testPattern = ["↓","↓","↑","↓"];
+let currentStep = 0;
+
+strumPattern.innerHTML = testPattern.map(s=>`<span>${s}</span>`).join(" ");
+
+micBtn.addEventListener("click", async ()=>{
+    if(!navigator.mediaDevices) return alert("No mic access");
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    const source = audioCtx.createMediaStreamSource(stream);
+    source.connect(analyser);
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    detectStrum();
+});
+
+function detectStrum(){
+    requestAnimationFrame(detectStrum);
+    analyser.getByteFrequencyData(dataArray);
+    let volume = dataArray.reduce((a,b)=>a+b)/dataArray.length;
+    if(volume>50){
+        let spans = strumPattern.querySelectorAll("span");
+        let expected = testPattern[currentStep];
+        let detected = volume>120?"↓":"↑";
+        if(detected===expected){
+            spans[currentStep].style.color="green";
+            currentStep++;
+            if(currentStep>=testPattern.length){
+                feedback.textContent="Pattern complete!";
+                currentStep=0;
+                spans.forEach(s=>s.style.color="black");
+            }
+        } else {
+            spans[currentStep].style.color="red";
+        }
+    }
+}
+
+// -------- DASHBOARD --------
+const strumAccuracy = document.getElementById("strum-accuracy");
+const quizHistory = document.getElementById("quiz-history");
+
+function updateDashboard(){
+    strumAccuracy.textContent = Math.floor(Math.random()*100)+"%";
+    quizHistory.textContent = quizScore+"/5 last attempt";
+}
+
+// show dashboard
+const btnDashboard = document.getElementById("btn-dashboard");
+btnDashboard.addEventListener("click", ()=>{
+    mainMenu.classList.add("hidden");
+    dashboardScreen.classList.remove("hidden");
+    updateDashboard();
+});
 </script>
 </body>
 </html>
