@@ -38,8 +38,7 @@
   }
   .logo{display:flex;align-items:center;font-weight:700;font-size:1.25rem}
   .logo .guitar{color:#fff}
-  /* hub background changed to orange as requested */
-  .logo .hub{color:black;background:orange;padding:4px 8px;border-radius:6px;margin-left:8px}
+  .logo .hub{color:black;background:orange;padding:4px 8px;border-radius:6px;margin-left:8px} /* hub bg set to orange as requested */
   .controls{display:flex;gap:8px;align-items:center}
   main{padding:92px 14px 40px; max-width:980px;margin:0 auto;}
   button{padding:10px 16px;border-radius:8px;border:none;background:var(--accent);color:#000;font-weight:600;cursor:pointer;transition:all 0.2s}
@@ -47,13 +46,12 @@
   .back-btn{background:#444;color:#fff}
   .ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px}
   .card{background:var(--muted);padding:14px;border-radius:10px;margin:12px 0;box-shadow:0 6px 16px rgba(0,0,0,0.6);transition:all 0.3s ease}
-  /* smoother show/hide with helper functions in JS */
-  .hidden{display:none;opacity:0}
-  .visible{display:block;opacity:1}
+  .hidden{display:none;opacity:0;transition:opacity 0.3s ease}
+  .visible{display:block;opacity:1;transition:opacity 0.3s ease}
   .chord-grid{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:8px}
-  .chord-card{width:120px;background:#222;padding:10px;border-radius:10px;box-shadow:0 6px 14px rgba(0,0,0,0.6);text-align:center;transition:transform 0.2s}
+  .chord-card{width:120px;background:#222;padding:10px;border-radius:10px;box-shadow:0 6px 14px rgba(0,0,0,0.6);text-align:center;transition:transform 0.2s;display:flex;flex-direction:column;align-items:center;justify-content:center}
   .chord-card:hover{transform:scale(1.05)}
-  .chord-card img{width:100px;height:auto;display:block;margin:8px auto}
+  .chord-card img{width:80px;height:80px;object-fit:contain;display:block;margin:8px auto}
   .timer{font-weight:700;color:gold;font-size:1.2rem;margin:8px}
   #quiz-options button{display:block;width:100%;margin:8px 0;background:#333;color:#fff;padding:10px;border-radius:8px}
   input[type="text"],input[type="email"],input[type="password"]{
@@ -68,12 +66,15 @@
   #account-panel{position:fixed;top:58px;right:12px;width:300px;background:#141414;padding:12px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.6);display:none;z-index:1100}
   #account-panel h4{margin:0 0 8px 0}
   #strum-highlight{font-size:1.5rem;margin:12px 0;letter-spacing:6px}
+  #strum-highlight .step{padding:4px 6px;border-radius:4px;margin:0 4px;display:inline-block}
+  #strum-highlight .current{outline:2px solid #fff}
+  #chord-preview{margin-top:12px}
+  #chord-preview img{width:120px;height:120px;object-fit:contain;display:block;margin:8px auto}
   @media (max-width:600px){
     .logo{font-size:1.05rem}
     main{padding:96px 12px}
     .chord-card{width:96px}
   }
-  /* keep text white in light-mode as you requested (do NOT switch text to black) */
   .light-mode{background:#fff;color:#fff}
   .light-mode .logo .hub{background:orange;color:black}
   .light-mode button{color:#000}
@@ -104,7 +105,7 @@
 </div>
 
 <main>
-  <div id="login-screen" class="card visible">
+  <div id="login-screen" class="card">
     <h1 style="margin:0 0 8px 0">Login</h1>
     <input id="email" type="email" placeholder="Email" autocomplete="username">
     <div class="row" style="align-items:center">
@@ -157,9 +158,14 @@
     <div id="song-list" style="max-height:360px;overflow:auto;padding-right:6px"></div>
     <div style="margin-top:12px">
       <p id="song-pattern" style="font-weight:700">Pattern: —</p>
-      <button id="start-mic" class="ghost">Start Mic Test</button>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
+        <button id="start-mic" class="ghost">Start Mic Test</button>
+        <button id="start-strum-chord" class="ghost">Start Strum Practice (Chords)</button>
+        <button id="stop-mic" class="ghost">Stop Mic</button>
+      </div>
       <p id="strum-feedback" style="margin-top:8px"></p>
-      <div id="strum-highlight"></div>
+      <div id="strum-highlight" aria-hidden="false"></div>
+      <div id="chord-preview"></div>
     </div>
     <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
@@ -188,9 +194,8 @@
   </div>
 </main>
 
-<!-- Application logic -->
 <script type="module">
-  // Firebase imports (kept as you had them)
+  // Firebase imports (kept; working login previously)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, updatePassword, deleteUser } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
@@ -207,7 +212,7 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // Panels/elements
+  // Panels
   const loginScreen = document.getElementById("login-screen");
   const mainMenu = document.getElementById("main-menu");
   const chordsPanel = document.getElementById("chords");
@@ -217,50 +222,41 @@
   const dashboardPanel = document.getElementById("dashboard");
   const accountPanel = document.getElementById("account-panel");
 
+  // Inputs / buttons
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
   const authMsg = document.getElementById("auth-msg");
   const burgerBtn = document.getElementById("burger");
   const accountEmail = document.getElementById("account-email");
 
-  // Utility: show only one panel
-  function showPanel(panel){
-    // hide all known panels
-    [loginScreen, mainMenu, chordsPanel, practicePanel, strumPanel, quizPanel, dashboardPanel].forEach(p=>{
-      if(!p) return;
-      p.classList.add('hidden');
-      p.classList.remove('visible');
-    });
-    if(panel){
-      panel.classList.remove('hidden');
-      panel.classList.add('visible');
-      // close account overlay when switching
-      accountPanel.style.display = 'none';
-      // scroll top for long pages
-      window.scrollTo({top:0,behavior:'smooth'});
-    }
+  // Basic chord list (expanded later)
+  const allChords = ["C","Cm","D","Dm","E","Em","F","Fm","G","Gm","A","Am","B","Bm","F#","F#m","C#","C#m","G#","G#m","D#","D#m","A#","A#m","Cmaj7","D7","E7","A7"];
+  // map chord names to image filenames in /image folder: c.png, fsharp.png, fsharpm.png etc.
+  function chordToFilename(chord){
+    // e.g. "F#" -> "fsharp.png"; "F#m" -> "fsharpm.png"; "C" -> "c.png"; "Cmaj7" -> "cmaj7.png"
+    let name = chord.replace(/#/g, "sharp").replace(/\+/g, "plus").replace(/\s+/g,"").toLowerCase();
+    // remove characters illegal in filenames if any
+    name = name.replace(/[^a-z0-9-_]/g, '');
+    return `image/${name}.png`;
   }
 
-  // Dark Mode toggle (keeps text white as requested)
+  // Dark Mode toggle - keep text white in light mode as requested (so we intentionally don't invert all text)
   document.getElementById("dark-toggle").addEventListener("click", ()=> {
     document.body.classList.toggle("light-mode");
   });
 
-  // burger
   burgerBtn.addEventListener("click", ()=>{
     accountPanel.style.display = accountPanel.style.display === "block" ? "none" : "block";
   });
 
-  // password toggle
   document.getElementById("toggle-pass").addEventListener("click", ()=>{
     passwordInput.type = passwordInput.type === "password" ? "text" : "password";
   });
 
-  // sign up / login / continue
   document.getElementById("signup-btn").addEventListener("click", async ()=>{
     const email = emailInput.value.trim();
     const pw = passwordInput.value;
-    if(!email || !pw){ authMsg.textContent = "Provide email & password to sign up."; authMsg.style.color="#f88"; return; }
+    if(!email || !pw){ authMsg.textContent = "Provide email & password to sign up."; return; }
     try{
       await createUserWithEmailAndPassword(auth, email, pw);
       authMsg.style.color = "#8f8"; authMsg.textContent = "Account created, signed in.";
@@ -278,7 +274,8 @@
   });
 
   document.getElementById("continue-btn").addEventListener("click", ()=>{
-    showPanel(mainMenu);
+    loginScreen.classList.add("hidden");
+    mainMenu.classList.remove("hidden");
     accountEmail.textContent = "Guest";
   });
 
@@ -293,13 +290,8 @@
   });
 
   document.getElementById("signout-btn").addEventListener("click", async ()=>{
-    try{
-      await signOut(auth);
-      showPanel(loginScreen);
-      accountPanel.style.display='none';
-      accountEmail.textContent='Not signed in';
-      authMsg.textContent='';
-    }catch(e){ console.error(e); }
+    try{ await signOut(auth); loginScreen.classList.remove("hidden"); mainMenu.classList.add("hidden"); accountPanel.style.display='none'; accountEmail.textContent='Not signed in'; authMsg.textContent=''; }
+    catch(e){ console.error(e); }
   });
 
   document.getElementById("change-pass").addEventListener("click", async ()=>{
@@ -318,7 +310,7 @@
     try{
       await deleteUser(auth.currentUser);
       alert("Account deleted.");
-      showPanel(loginScreen);
+      loginScreen.classList.remove("hidden"); mainMenu.classList.add("hidden");
     }catch(e){
       alert("Delete failed: "+e.message);
     }
@@ -327,122 +319,104 @@
   onAuthStateChanged(auth, (user)=>{
     if(user){
       accountEmail.textContent = user.email || "User";
-      showPanel(mainMenu);
+      loginScreen.classList.add("hidden");
+      mainMenu.classList.remove("hidden");
       authMsg.textContent = "";
     }
   });
 
-  // --- Main Menu Buttons (fixed) ---
+  // --- Main Menu Buttons ---
   document.getElementById("btn-chords").addEventListener("click", ()=>{
-    showPanel(chordsPanel);
+    loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); chordsPanel.classList.remove("hidden");
   });
   document.getElementById("btn-practice").addEventListener("click", ()=>{
-    showPanel(practicePanel);
+    loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); practicePanel.classList.remove("hidden");
+    // ensure initial chord displayed on entering practice
+    showNextPracticeChord();
   });
   document.getElementById("btn-strum").addEventListener("click", ()=>{
-    showPanel(strumPanel);
+    loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); strumPanel.classList.remove("hidden");
+    // render songs and reset strum UI
+    renderSongs();
+    updateStrumUI();
   });
   document.getElementById("btn-quiz").addEventListener("click", ()=>{
-    showPanel(quizPanel);
+    loginScreen.classList.add("hidden"); mainMenu.classList.add("hidden"); quizPanel.classList.remove("hidden");
   });
-
-  document.getElementById("btn-learn-songs").addEventListener("click", ()=>{
-    alert("Song learning module not implemented yet.");
-  });
-  document.getElementById("btn-tune").addEventListener("click", ()=>{
-    window.open('https://www.guitartuna.com/','_blank');
-  });
+  document.getElementById("btn-learn-songs").addEventListener("click", ()=>{ alert("Learn Songs: coming soon."); });
+  document.getElementById("btn-tune").addEventListener("click", ()=>{ window.open('https://www.guitartuna.com/', '_blank'); });
 
   document.getElementById("show-dashboard").addEventListener("click", ()=>{
-    showPanel(dashboardPanel);
+    loginScreen.classList.add("hidden");
+    mainMenu.classList.add("hidden");
+    chordsPanel.classList.add("hidden");
+    practicePanel.classList.add("hidden");
+    strumPanel.classList.add("hidden");
+    quizPanel.classList.add("hidden");
+    dashboardPanel.classList.remove("hidden");
+    accountPanel.style.display = 'none';
+    loadDashboardDataToUI();
   });
 
   function goBack(){
-    showPanel(mainMenu);
+    chordsPanel.classList.add("hidden");
+    practicePanel.classList.add("hidden");
+    strumPanel.classList.add("hidden");
+    quizPanel.classList.add("hidden");
+    dashboardPanel.classList.add("hidden");
+    mainMenu.classList.remove("hidden");
+    // stop microphone if active
+    stopMicIfActive();
   }
 
-  // --- Chords population (image naming fixed)
-  // You said images live in folder `image/` (no trailing 's') and names like c.png, fsharp.png, fsharpm.png
-  const chordImageName = (chord) => {
-    // normalize chord names to your requested filenames:
-    // example mappings:
-    // C   -> c.png
-    // F#  -> fsharp.png
-    // F#m -> fsharpm.png
-    // Am  -> am.png (if present)
-    let name = chord.toLowerCase();
-    // convert sharp symbol
-    name = name.replace(/#/g,'sharp');
-    // remove characters not desired
-    // special-case trailing 'm' for minor chords: "fsharpm" already desired if chord was "F#m"
-    // we will keep 'm' in name
-    name = name.replace(/\+/g,'plus');
-    // Some chords may use names like cmaj7 -> cmaj7.png
-    return `image/${name}.png`;
-  };
-
-  const chords = ["C","D","E","F","G","A","B","Am","Dm","Em","F#m","Bm","Cmaj7","C#m","G#m","F#","Fsharpm"]; // kept wide set
+  // --- Chords Grid ---
   const chordGrid = document.getElementById("chord-grid");
-
   function populateChordGrid(){
     chordGrid.innerHTML = "";
-    chords.forEach(chord=>{
+    // show allChords in grid
+    allChords.forEach(chord=>{
       const card = document.createElement("div");
       card.className = "chord-card";
-      const imgSrc = chordImageName(chord);
-      // keep inner layout intact but safe string composition:
-      card.innerHTML = '<div style="font-weight:700">' + chord + '</div>' +
-                       `<img src="${imgSrc}" alt="${chord} chord" onerror="this.onerror=null;this.src='image/placeholder.png'">`;
+      const fname = chordToFilename(chord);
+      card.innerHTML = `<div style="font-weight:700">${chord}</div>
+        <img src="${fname}" alt="${chord} chord" onerror="this.onerror=null;this.src='image/placeholder.png'">`;
       chordGrid.appendChild(card);
     });
   }
   populateChordGrid();
 
-  // --- Practice chords ---
+  // --- Practice Chords Logic (fixed: initial chord and next) ---
+  const practiceChords = allChords.slice(); // use full list
   let currentPracticeChord = null;
-  const practiceChords = ["C","D","E","F","G","A","B","Am","Dm","Em","F#m","Bm","Cmaj7","C#m","G#m"];
-  document.getElementById("next-chord").addEventListener("click", ()=>{
+  function showNextPracticeChord(){
     currentPracticeChord = practiceChords[Math.floor(Math.random()*practiceChords.length)];
     document.getElementById("practice-chord-display").textContent = currentPracticeChord;
-    // show corresponding image if available
-    const imgPath = chordImageName(currentPracticeChord);
-    document.getElementById("practice-feedback").innerHTML = `<img src="${imgPath}" style="width:150px" onerror="this.onerror=null;this.style.display='none'">`;
-  });
+    // show image in feedback area
+    const imgPath = chordToFilename(currentPracticeChord);
+    document.getElementById("practice-feedback").innerHTML = `<img src="${imgPath}" alt="${currentPracticeChord}" style="width:150px" onerror="this.onerror=null;this.style.display='none'">`;
+  }
+  document.getElementById("next-chord").addEventListener("click", showNextPracticeChord);
 
-  // play-chord placeholder: you had that as placeholder; keep it safe (no audio synthesized)
+  // dummy play button placeholder (could be replaced with audio samples)
   document.getElementById("play-chord").addEventListener("click", ()=>{
-    alert("Play functionality not implemented (placeholder).");
+    const chord = currentPracticeChord || practiceChords[0];
+    alert(`(Placeholder) Would play audio for ${chord}`);
   });
 
-  // --- Song list and strum UI (select button fixed) ---
+  // --- Song List & Strum (fixed songs array and select) ---
   const songs = [
-    {name:"Wonderwall - Oasis", chords:"Em7 G Dsus4 A7sus4", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-    {name:"Knockin' on Heaven's Door - Bob Dylan", chords:"G D Am G D C", pattern:"↓ ↓ ↑ ↓ ↑"},
-    {name:"Zombie - The Cranberries", chords:"Em C G D", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Let It Be - The Beatles", chords:"C G Am F", pattern:"↓ ↓ ↑ ↓ ↓ ↑ ↓ ↓ ↑"},
-    {name:"Perfect - Ed Sheeran", chords:"G Em C D", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-    {name:"Tears in Heaven - Eric Clapton", chords:"A E/G# F#m D A E", pattern:"↓ ↓ ↑ ↓ ↑"},
-    {name:"Hotel California - Eagles", chords:"Bm F# A E G D Em F#", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-    {name:"Stand By Me - Ben E. King", chords:"G Em C D", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Love Yourself - Justin Bieber", chords:"C D Em D", pattern:"↓ ↑ ↓ ↑"},
-    {name:"All of Me - John Legend", chords:"Em C G D", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Someone Like You - Adele", chords:"A E F#m D", pattern:"↓ ↓ ↑ ↓ ↑"},
-    {name:"Chasing Cars - Snow Patrol", chords:"A E D", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Hey There Delilah - Plain White T's", chords:"D Bm G A", pattern:"↓ ↓ ↑ ↑ ↓"},
-    {name:"I'm Yours - Jason Mraz", chords:"G D Em C", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-    {name:"Hallelujah - Jeff Buckley", chords:"C Am C Am", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Shape of You - Ed Sheeran", chords:"Am F C G", pattern:"↓ ↓ ↑ ↓ ↑"},
-    {name:"Photograph - Ed Sheeran", chords:"G D Em C", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Nothing Else Matters - Metallica", chords:"Em D C G B7", pattern:"↓ ↓ ↑ ↑ ↓"},
-    {name:"Creep - Radiohead", chords:"G B C Cm", pattern:"↓ ↑ ↓ ↑"},
-    {name:"Yellow - Coldplay", chords:"B F# G#m E", pattern:"↓ ↓ ↑ ↓ ↑ ↓ ↑"}
+    {name:"Wonderwall - Oasis", chords:"Em7 G Dsus4 A7sus4", pattern:["↓","↓","↑","↑","↓","↑"]},
+    {name:"Knockin' on Heaven's Door - Bob Dylan", chords:"G D Am G D C", pattern:["↓","↓","↑","↓","↑"]},
+    {name:"Zombie - The Cranberries", chords:"Em C G D", pattern:["↓","↑","↓","↑"]},
+    {name:"Let It Be - The Beatles", chords:"C G Am F", pattern:["↓","↓","↑","↓","↓","↑","↓","↓","↑"]},
+    {name:"Perfect - Ed Sheeran", chords:"G Em C D", pattern:["↓","↓","↑","↑","↓","↑"]},
+    {name:"Chasing Cars - Snow Patrol", chords:"A E D", pattern:["↓","↑","↓","↑"]},
+    {name:"Love Yourself - Justin Bieber", chords:"C G Am F", pattern:["↓","↑","↓","↑"]},
+    {name:"All of Me - John Legend", chords:"Em C G D Am", pattern:["↓","↓","↑","↑","↓","↑"]}
   ];
 
   const songList = document.getElementById("song-list");
   const songSearch = document.getElementById("song-search");
-
-  function escapeHtmlSingleQuote(s){ return s.replace(/'/g,"\\'"); }
-
   function renderSongs(filter=""){
     songList.innerHTML = "";
     const q = filter.trim().toLowerCase();
@@ -450,167 +424,29 @@
       if(q && !s.name.toLowerCase().includes(q)) return;
       const div = document.createElement("div");
       div.className = "song";
-      // create a select button that calls selectSong with proper escaping
       div.innerHTML = `<div class="title">${s.name}</div>
-        <div class="meta">Chords: ${s.chords}<br>Strum: ${s.pattern}
-          <div style="margin-top:8px">
-            <button class="ghost select-song-btn">Select</button>
-          </div>
-        </div>`;
-      // attach handler to the select button
-      const btn = div.querySelector('.select-song-btn');
-      btn.addEventListener('click', ()=> selectSong(s));
+        <div class="meta">Chords: ${s.chords}<br>Strum: ${s.pattern.join(' ')}</div>
+        <div style="margin-top:8px"><button class="ghost select-song">Select</button></div>`;
+      const btn = div.querySelector(".select-song");
+      btn.addEventListener("click", ()=> selectSong(s));
       songList.appendChild(div);
     });
   }
-  if(songSearch) songSearch.addEventListener("input", ()=> renderSongs(songSearch.value));
+
+  function selectSong(song){
+    document.getElementById("song-pattern").textContent = `Pattern: ${song.pattern.join(' ')} — Chords: ${song.chords}`;
+    // store selected pattern for strum detection
+    currentPattern = song.pattern.slice();
+    currentStrumIndex = 0;
+    updateStrumUI();
+    document.getElementById("strum-feedback").textContent = '';
+  }
+
+  songSearch && songSearch.addEventListener("input", ()=> renderSongs(songSearch.value));
   renderSongs();
 
-  function selectSong(songObj){
-    document.getElementById("song-pattern").textContent = `Pattern: ${songObj.pattern}`;
-    // set the active current pattern for detection
-    currentPattern = songObj.pattern.split(' ').filter(Boolean);
-    // show highlight reset
-    currentStrumIndex = 0;
-    updateStrumHighlight();
-    document.getElementById("strum-feedback").textContent = "";
-    showPanel(strumPanel);
-  }
-
-  // --- Strum detection & highlight logic ---
-  // We'll use a simple amplitude-based detection (placeholder) and pattern matching.
-  let audioContext, analyser, dataArray, sourceStream;
-  let currentPattern = ["↓","↓","↑","↓"]; // default example
-  let currentStrumIndex = 0;
-  let hits = 0;
-  let totalStrums = 0;
-  let strumActive = false;
-  const strumFeedback = document.getElementById("strum-feedback");
-  const startMicBtn = document.getElementById("start-mic");
-
-  function updateStrumHighlight(){
-    const highlight = document.getElementById("strum-highlight");
-    // render tokens with spans so we can color them
-    highlight.innerHTML = currentPattern.map((s,i)=>{
-      if(i < currentStrumIndex){
-        // already done -> green
-        return `<span style="color:#8f8">${s}</span>`;
-      } else if(i === currentStrumIndex){
-        // current -> yellow-ish
-        return `<span style="text-decoration:underline;font-weight:700">${s}</span>`;
-      } else {
-        return `<span style="color:#ddd">${s}</span>`;
-      }
-    }).join(" ");
-  }
-
-  async function startMic(){
-    if(strumActive){
-      // stop current session
-      strumActive = false;
-      if(sourceStream && sourceStream.mediaStream) sourceStream.mediaStream.getTracks().forEach(t=>t.stop());
-      startMicBtn.textContent = "Start Mic Test";
-      strumFeedback.textContent = "Stopped.";
-      return;
-    }
-
-    if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    try{
-      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-      sourceStream = { mediaStream: stream };
-      const source = audioContext.createMediaStreamSource(stream);
-      analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      source.connect(analyser);
-      const bufferLength = analyser.fftSize;
-      dataArray = new Uint8Array(bufferLength);
-
-      currentStrumIndex = 0;
-      hits = 0;
-      totalStrums = 0;
-      strumActive = true;
-      startMicBtn.textContent = "Stop Mic Test";
-      updateStrumHighlight();
-      strumFeedback.textContent = "Listening...";
-      requestAnimationFrame(checkStrum);
-    }catch(e){
-      strumFeedback.textContent = "Mic access denied or unavailable.";
-      console.error(e);
-    }
-  }
-
-  function checkStrum(){
-    if(!strumActive) return;
-    analyser.getByteTimeDomainData(dataArray);
-    // compute a simple amplitude metric
-    let sum = 0;
-    for(let i=0;i<dataArray.length;i++){
-      const v = dataArray[i]-128;
-      sum += Math.abs(v);
-    }
-    const avg = sum / dataArray.length;
-    // tweak threshold for sensitivity; this is a simple approximation
-    const STRUM_THRESHOLD = 8; // tuned empirically; you can adjust
-    let detected = null;
-    if(avg > STRUM_THRESHOLD){
-      // detect direction by comparing low-frequency energy vs overall? We keep placeholder: treat as ↓
-      // Optional: use approximate envelope sign changes to detect up vs down — for simplicity use ↓
-      detected = "↓";
-      // To try to detect up vs down, you would need more complex audio analysis (out of scope)
-    }
-
-    if(detected){
-      // simple debounce: wait a small time so we don't double count
-      // We'll pause detection for 250ms after detecting
-      totalStrums++;
-      const expected = currentPattern[currentStrumIndex];
-      const highlightElem = document.getElementById("strum-highlight");
-      if(detected === expected){
-        hits++;
-        // mark correct visually by temporarily highlighting the token green
-        // advance index
-        currentStrumIndex++;
-        updateStrumHighlight();
-        strumFeedback.textContent = "Correct strum!";
-      } else {
-        // wrong
-        strumFeedback.textContent = `Wrong strum (got ${detected} expected ${expected})`;
-        // flash the current token red for a short time
-        // do not advance index
-        // We simulate flashing by temporarily wrapping with red span
-        // For simplicity we update feedback only
-      }
-
-      // update dashboard accuracy
-      const accuracy = totalStrums > 0 ? Math.round((hits/totalStrums)*100) : 0;
-      document.getElementById("dash-strum").textContent = accuracy + "%";
-
-      if(currentStrumIndex >= currentPattern.length){
-        strumFeedback.textContent = "Pattern completed!";
-        strumActive = false;
-        startMicBtn.textContent = "Start Mic Test";
-        // stop stream
-        if(sourceStream && sourceStream.mediaStream) sourceStream.mediaStream.getTracks().forEach(t=>t.stop());
-        return;
-      }
-
-      // small pause to avoid multiple triggers
-      // We'll block detection for 300ms
-      strumActive = true;
-      // simple debounce using setTimeout to continue checks
-      setTimeout(()=>{ strumActive = true; requestAnimationFrame(checkStrum); }, 300);
-      return;
-    }
-
-    // continue loop
-    requestAnimationFrame(checkStrum);
-  }
-
-  startMicBtn.addEventListener("click", startMic);
-
-  // --- Quiz: include more chords & images ---
-  // Use expanded chord set
-  const quizChords = ["C","D","E","F","G","A","B","Am","Dm","Em","F#m","Bm","Cmaj7","C#m","G#m","F#","Fsharpm"];
+  // --- Quiz (use full chord list; images loaded from folder) ---
+  const quizChords = allChords.slice(); // include all chords
   let quizScore = 0;
   let quizCount = 0;
   const quizTotal = 10;
@@ -622,22 +458,25 @@
   let quizTimer;
   let currentQuizChord;
 
-  document.getElementById("start-quiz").addEventListener("click", ()=>{
+  function startQuiz(){
     quizScore = 0;
     quizCount = 0;
     quizResult.classList.add("hidden");
     quizArea.classList.remove("hidden");
-    document.getElementById("start-quiz").style.display = 'none';
-    document.getElementById("reset-quiz").style.display = 'inline-block';
     nextQuizChord();
+  }
+
+  document.getElementById("start-quiz").addEventListener("click", ()=>{
+    startQuiz();
+    document.getElementById("start-quiz").style.display = "none";
+    document.getElementById("reset-quiz").style.display = "inline-block";
   });
 
   document.getElementById("reset-quiz").addEventListener("click", ()=>{
-    quizScore = 0; quizCount = 0;
+    document.getElementById("start-quiz").style.display = "inline-block";
+    document.getElementById("reset-quiz").style.display = "none";
     quizArea.classList.add("hidden");
     quizResult.classList.add("hidden");
-    document.getElementById("start-quiz").style.display = 'inline-block';
-    document.getElementById("reset-quiz").style.display = 'none';
   });
 
   function nextQuizChord(){
@@ -646,20 +485,25 @@
       quizArea.classList.add("hidden");
       quizResult.classList.remove("hidden");
       quizResult.textContent = `Quiz Completed! Score: ${quizScore}/${quizTotal}`;
-      // update dashboard history (store in-memory)
-      recordQuizScore(quizScore);
-      document.getElementById("start-quiz").style.display = 'inline-block';
-      document.getElementById("reset-quiz").style.display = 'none';
+      // record to dashboard history
+      saveQuizScore(quizScore);
+      loadDashboardDataToUI();
+      document.getElementById("start-quiz").style.display = "inline-block";
+      document.getElementById("reset-quiz").style.display = "none";
       return;
     }
     currentQuizChord = quizChords[Math.floor(Math.random()*quizChords.length)];
-    // show image if available; fallback to text
-    const imgSrc = chordImageName(currentQuizChord);
-    quizImage.innerHTML = `<img src="${imgSrc}" alt="${currentQuizChord}" style="max-width:200px" onerror="this.onerror=null;this.style.display='none';document.getElementById('quiz-image').textContent='${currentQuizChord}';">`;
+    // show image (attempting to load image)
+    const img = document.createElement("img");
+    img.src = chordToFilename(currentQuizChord);
+    img.alt = currentQuizChord;
+    img.style.width = "160px";
+    img.onerror = function(){ this.onerror=null; this.style.display='none'; quizImage.textContent = currentQuizChord; };
+    quizImage.innerHTML = "";
+    quizImage.appendChild(img);
+
     quizOptions.innerHTML = "";
-    // Build 4 choices including the correct one
-    const choices = shuffleArray(quizChords.slice()).slice(0,4);
-    if(!choices.includes(currentQuizChord)) choices[Math.floor(Math.random()*choices.length)] = currentQuizChord;
+    const choices = randomChoices(quizChords, currentQuizChord, 4);
     choices.forEach(c=>{
       const btn = document.createElement("button");
       btn.textContent = c;
@@ -674,7 +518,7 @@
   }
 
   function startQuizTimer(){
-    let time = 5;
+    let time = 8;
     timerEl.textContent = time;
     clearInterval(quizTimer);
     quizTimer = setInterval(()=>{
@@ -688,27 +532,256 @@
     },1000);
   }
 
-  function shuffleArray(array){
-    for(let i = array.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
+  function randomChoices(list, answer, n){
+    // create a shuffled copy; ensure answer included
+    const copy = list.slice().sort(()=>Math.random()-0.5);
+    let choices = copy.slice(0, n);
+    if(!choices.includes(answer)){
+      choices[Math.floor(Math.random()*n)] = answer;
     }
-    return array;
+    return choices;
   }
 
-  // Dashboard quiz history (in-memory)
-  let quizHistory = [];
-  function recordQuizScore(score){
-    quizHistory.push({score, date: new Date().toISOString()});
-    document.getElementById("dash-quiz").textContent = quizHistory.map(q=>q.score).join(", ");
+  // --- Dashboard storage & UI ---
+  function saveQuizScore(score){
+    const hist = JSON.parse(localStorage.getItem("quizHistory")||"[]");
+    hist.push({score, at: Date.now()});
+    // keep last 20
+    if(hist.length>20) hist.splice(0, hist.length-20);
+    localStorage.setItem("quizHistory", JSON.stringify(hist));
   }
 
-  // Keep initial panel visible state consistent
-  showPanel(loginScreen);
+  function saveStrumAccuracy(accuracy){
+    // store averaged or last; for simplicity save last
+    localStorage.setItem("lastStrumAccuracy", String(accuracy));
+  }
 
-  // Minor safety: expose showPanel for debug
-  window.showPanel = showPanel;
+  function loadDashboardDataToUI(){
+    const qh = JSON.parse(localStorage.getItem("quizHistory")||"[]");
+    const dashQuiz = document.getElementById("dash-quiz");
+    dashQuiz.textContent = qh.length ? qh.map(h=>h.score).join(", ") : "N/A";
+    const sa = localStorage.getItem("lastStrumAccuracy") || "0";
+    document.getElementById("dash-strum").textContent = sa + "%";
+  }
+
+  function updateStrumDashboard(accuracy){
+    document.getElementById("dash-strum").textContent = accuracy + "%";
+    saveStrumAccuracy(accuracy);
+  }
+
+  // --- STRUM DETECTION & PRACTICE (improved) ---
+  let audioContext, analyser, dataArray, source;
+  let currentPattern = ["↓","↓","↑","↓"]; // default/example
+  let currentStrumIndex = 0;
+  let hits = 0;
+  let totalStrums = 0;
+  let strumActive = false;
+  const strumFeedbackEl = document.getElementById("strum-feedback");
+  const startMicBtn = document.getElementById("start-mic");
+  const stopMicBtn = document.getElementById("stop-mic");
+  const startStrumChordBtn = document.getElementById("start-strum-chord");
+  let micStream = null;
+  let lastRms = 0;
+  let lastTime = 0;
+  let chordPracticeActive = false;
+  let chordPracticeSequence = []; // e.g. chords to practice
+  let chordPracticeIndex = 0;
+
+  function avgAbs(arr){
+    let sum = 0;
+    for(let i=0;i<arr.length;i++) sum += Math.abs(arr[i]-128);
+    return sum/arr.length;
+  }
+
+  async function startMic(){
+    try{
+      if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      micStream = await navigator.mediaDevices.getUserMedia({audio:true});
+      source = audioContext.createMediaStreamSource(micStream);
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      source.connect(analyser);
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      currentStrumIndex = 0;
+      hits = 0;
+      totalStrums = 0;
+      strumActive = true;
+      chordPracticeActive = false;
+      lastRms = 0;
+      lastTime = performance.now();
+      updateStrumUI();
+      strumFeedbackEl.textContent = "Mic active — strum now!";
+      requestAnimationFrame(checkStrum);
+    }catch(e){
+      strumFeedbackEl.textContent = "Mic error: " + e.message;
+    }
+  }
+
+  function stopMicIfActive(){
+    try{
+      if(micStream){
+        micStream.getTracks().forEach(t=>t.stop());
+        micStream = null;
+      }
+      if(source){ source.disconnect(); source=null; }
+      if(analyser){ analyser.disconnect(); analyser=null; }
+      strumActive = false;
+      chordPracticeActive = false;
+      strumFeedbackEl.textContent = "Mic stopped.";
+    }catch(e){}
+  }
+
+  stopMicBtn.addEventListener("click", stopMicIfActive);
+  startMicBtn.addEventListener("click", startMic);
+
+  // Start a chord strum practice sequence (random chords)
+  startStrumChordBtn.addEventListener("click", ()=>{
+    // create a sequence of 4 random chords
+    chordPracticeSequence = [];
+    for(let i=0;i<4;i++) chordPracticeSequence.push(allChords[Math.floor(Math.random()*allChords.length)]);
+    chordPracticeIndex = 0;
+    chordPracticeActive = true;
+    currentPattern = ["↓","↓","↑","↓"]; // example pattern for each chord
+    currentStrumIndex = 0;
+    hits = 0;
+    totalStrums = 0;
+    strumActive = true;
+    updateChordPreview();
+    updateStrumUI();
+    strumFeedbackEl.textContent = "Strum practice started for chords sequence.";
+    // ensure mic running
+    if(!micStream) startMic();
+  });
+
+  function updateChordPreview(){
+    const preview = document.getElementById("chord-preview");
+    preview.innerHTML = "";
+    if(chordPracticeActive){
+      const chord = chordPracticeSequence[chordPracticeIndex];
+      const img = document.createElement("img");
+      img.src = chordToFilename(chord);
+      img.alt = chord;
+      img.onerror = function(){ this.onerror=null; this.style.display='none'; preview.textContent = chord; };
+      preview.appendChild(img);
+    }
+  }
+
+  function updateStrumUI(){
+    const highlight = document.getElementById("strum-highlight");
+    highlight.innerHTML = "";
+    (currentPattern || []).forEach((s,i)=>{
+      const span = document.createElement("span");
+      span.className = "step";
+      if(i===currentStrumIndex) span.classList.add("current");
+      span.textContent = s;
+      highlight.appendChild(span);
+    });
+  }
+
+  function determineDirectionFromWave(arr){
+    // Heuristic: estimate whether the initial average slope of signal is "down" or "up".
+    // We'll compute tiny window RMS and compare leading vs trailing average to guess direction.
+    // This is a simple heuristic and will not be perfect in all environments.
+    const n = arr.length;
+    let first = 0, last = 0, half = Math.floor(n/2);
+    for(let i=0;i<half;i++) first += arr[i];
+    for(let i=half;i<n;i++) last += arr[i];
+    first /= half; last /= (n-half);
+    // if overall waveform tends to go up in the buffer, call it "↑" else "↓"
+    return last > first ? "↑" : "↓";
+  }
+
+  function checkStrum(){
+    if(!strumActive || !analyser) return;
+    analyser.getByteTimeDomainData(dataArray);
+    const rms = avgAbs(dataArray);
+    const now = performance.now();
+    // detect a transient spike compared to lastRms
+    if(rms > 12 && rms > lastRms * 1.6){ // transient detected
+      // decide direction heuristically
+      const dir = determineDirectionFromWave(dataArray);
+      processDetectedStrum(dir);
+    }
+    lastRms = (lastRms*0.9) + (rms*0.1);
+    lastTime = now;
+    requestAnimationFrame(checkStrum);
+  }
+
+  function processDetectedStrum(detected){
+    totalStrums++;
+    const expected = currentPattern[currentStrumIndex];
+    const highlight = document.getElementById("strum-highlight");
+    // mark current step temporarily
+    const steps = highlight.querySelectorAll(".step");
+    if(detected === expected){
+      hits++;
+      // flash green
+      if(steps[currentStrumIndex]) steps[currentStrumIndex].style.background = "#2b8";
+      strumFeedbackEl.textContent = `Good — detected ${detected}`;
+      currentStrumIndex++;
+    } else {
+      // flash red
+      if(steps[currentStrumIndex]) steps[currentStrumIndex].style.background = "#d66";
+      strumFeedbackEl.textContent = `Wrong — detected ${detected} (expected ${expected})`;
+    }
+    // small timeout to reset color of previous step (so next highlight is visible)
+    setTimeout(()=> {
+      if(steps[currentStrumIndex-1]) steps[currentStrumIndex-1].style.background = "transparent";
+    }, 400);
+
+    const accuracy = totalStrums > 0 ? Math.round((hits/totalStrums)*100) : 0;
+    updateStrumDashboard(accuracy);
+
+    // if chord practice active, when pattern completed advance chords
+    if(chordPracticeActive && currentStrumIndex >= currentPattern.length){
+      // completed pattern for current chord
+      strumFeedbackEl.textContent = `Pattern completed for ${chordPracticeSequence[chordPracticeIndex]}`;
+      currentStrumIndex = 0;
+      chordPracticeIndex++;
+      if(chordPracticeIndex >= chordPracticeSequence.length){
+        chordPracticeActive = false;
+        strumActive = false;
+        strumFeedbackEl.textContent = "Chord strum practice complete!";
+        updateChordPreview();
+        return;
+      } else {
+        updateChordPreview();
+        updateStrumUI();
+      }
+    } else {
+      updateStrumUI();
+    }
+  }
+
+  // --- Helper utilities & init values ---
+  function updateStrumUIImmediately(){
+    // called on entering strum panel
+    updateStrumUI();
+    document.getElementById("chord-preview").innerHTML = "";
+  }
+  updateStrumUIImmediately();
+
+  function renderInitialState(){
+    // show an initial practice chord so user doesn't see an empty screen
+    showNextPracticeChord();
+    loadDashboardDataToUI();
+  }
+  renderInitialState();
+
+  // Stop mic when unloading
+  window.addEventListener("beforeunload", stopMicIfActive);
+
+  // Expose some functions for debugging in console (optional)
+  window.__gh = {
+    showNextPracticeChord,
+    startMic,
+    stopMicIfActive,
+    updateStrumUI,
+    populateChordGrid
+  };
 
 </script>
 </body>
 </html>
+
