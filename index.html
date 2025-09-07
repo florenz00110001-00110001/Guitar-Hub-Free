@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -42,19 +43,20 @@
   .controls{display:flex;gap:8px;align-items:center}
   main{padding:92px 14px 40px; max-width:980px;margin:0 auto;}
   button{padding:10px 16px;border-radius:8px;border:none;background:var(--accent);color:#000;font-weight:600;cursor:pointer;transition:all 0.2s}
-  button:hover{opacity:0.9}
+  button[disabled]{opacity:0.5;cursor:not-allowed}
+  button:hover{opacity:0.95}
   .back-btn{background:#444;color:#fff}
   .ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px}
   .card{background:var(--muted);padding:14px;border-radius:10px;margin:12px 0;box-shadow:0 6px 16px rgba(0,0,0,0.6);transition:all 0.3s ease}
-  .hidden{display:none;opacity:0;transition:opacity 0.3s ease}
-  .visible{display:block;opacity:1;transition:opacity 0.3s ease}
+  .hidden{display:none;opacity:0;pointer-events:none;transition:opacity 0.25s}
+  .visible{display:block;opacity:1;pointer-events:auto;transition:opacity 0.25s}
   .chord-grid{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:8px}
   .chord-card{width:120px;background:#222;padding:10px;border-radius:10px;box-shadow:0 6px 14px rgba(0,0,0,0.6);text-align:center;transition:transform 0.2s}
-  .chord-card:hover{transform:scale(1.05)}
+  .chord-card:hover{transform:scale(1.03)}
   .chord-card img{width:100px;height:auto;display:block;margin:8px auto}
   .timer{font-weight:700;color:gold;font-size:1.2rem;margin:8px}
   #quiz-options button{display:block;width:100%;margin:8px 0;background:#333;color:#fff;padding:10px;border-radius:8px}
-  input[type="text"],input[type="email"],input[type="password"],input[type="number"],textarea,select{
+  input[type="text"],input[type="email"],input[type="password"],input[type="number"]{
     width:100%;padding:10px;border-radius:8px;border:none;background:#1b1b1b;color:#fff;margin-bottom:10px;font-size:1rem;
   }
   .row{display:flex;gap:8px;align-items:center}
@@ -63,36 +65,42 @@
   .song .title{font-weight:700}
   .song .meta{font-size:0.9rem;color:#ddd;margin-top:6px}
   #burger{font-size:1.4rem;background:none;border:none;color:#fff;cursor:pointer;padding:6px 8px}
-  #account-panel{position:fixed;top:58px;right:12px;width:360px;background:#141414;padding:12px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.6);display:none;z-index:1100;color:var(--white)}
+  #account-panel{position:fixed;top:58px;right:12px;width:320px;background:#141414;padding:12px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.6);display:none;z-index:1100;color:var(--white)}
   #account-panel h4{margin:0 0 8px 0}
-  #strum-highlight{font-size:1.5rem;margin:12px 0;letter-spacing:6px;color:var(--white)}
-  .small-muted{font-size:0.9rem;color:#ccc}
-  .flex{display:flex;gap:8px;align-items:center;}
-  .side-by{display:flex;gap:8px;justify-content:space-between}
+  #strum-highlight{font-size:1.5rem;margin:12px 0;letter-spacing:8px;color:var(--white)}
   .metronome-controls{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:8px}
+  .admin-badge{background:gold;color:#000;padding:4px 8px;border-radius:8px;font-weight:700;margin-left:8px}
   @media (max-width:600px){
     .logo{font-size:1.05rem}
     main{padding:96px 12px}
     .chord-card{width:96px}
-    #account-panel{width:90%;}
   }
   .light-mode{background:#fff;color:#000}
   .light-mode .logo .hub{background:orange;color:black}
-  .light-mode button{color:#000}
-  /* ensure certain text remains white even in light-mode */
-  .always-white{color:var(--white) !important}
+  /* Keep some text white in light mode as requested */
+  .light-mode .song, .light-mode #login-screen h1, .light-mode #main-menu h2, .light-mode #practice h2, .light-mode #practice-chord-display, .light-mode #song-pattern, .light-mode #start-mic, .light-mode #start-strum-practice, .light-mode #stop-mic, .light-mode #strum-feedback {
+    color:var(--white) !important;
+  }
+  .status-ok{color:#7fff7f}
+  .status-bad{color:#ff6b6b}
+  .small-muted{font-size:0.9rem;color:#aaa}
+  .admin-controls{margin-top:10px;border-top:1px dashed #333;padding-top:8px}
 </style>
 </head>
-<body><header>
+<body>
+
+<header>
   <div class="logo">
-    <span class="guitar">Guitar</span><span class="hub">Hub</span>
+    <span class="guitar">Guitar</span><span class="hub">Hub-Ultimate</span>
   </div>
   <div class="controls">
     <button id="dark-toggle" title="Toggle theme">🌗</button>
     <button id="burger" aria-label="Open account menu">☰</button>
   </div>
-</header><div id="account-panel" aria-hidden="true">
-  <h4>Account</h4>
+</header>
+
+<div id="account-panel" aria-hidden="true">
+  <h4>Account <span id="admin-badge-spot"></span></h4>
   <p id="account-email">Not signed in</p>
   <div style="display:flex;gap:8px;margin-top:8px;">
     <button id="show-dashboard" class="ghost">Dashboard</button>
@@ -101,12 +109,12 @@
   <hr style="margin:10px 0;border-color:#222">
   <button id="change-pass" class="ghost" style="width:100%;margin-bottom:8px">Change password</button>
   <button id="delete-account" class="ghost" style="width:100%;color:#ff6666">Delete account</button>
-  <div id="admin-badge" style="margin-top:12px;display:none">
-    <strong class="small-muted">Admin tools active</strong>
-  </div>
-</div><main>
-  <div id="login-screen" class="card">
-    <h1 style="margin:0 0 8px 0;color:var(--white)" class="always-white">Login</h1>
+</div>
+
+<main>
+  <!-- Login -->
+  <div id="login-screen" class="card visible">
+    <h1 style="margin:0 0 8px 0;color:var(--white)">Login</h1>
     <input id="email" type="email" placeholder="Email" autocomplete="username">
     <div class="row" style="align-items:center">
       <input id="password" type="password" placeholder="Password" autocomplete="current-password" style="flex:1">
@@ -117,12 +125,15 @@
       <button id="signup-btn" class="ghost">Sign up</button>
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
-      <button id="continue-btn" class="ghost always-white">Continue without account</button>
+      <button id="continue-btn" class="ghost">Continue without account</button>
     </div>
     <p style="margin:12px 0 0 0"><a href="#" id="forgot-link" style="color:#ddd">Forgot password?</a></p>
     <p id="auth-msg" style="color:#f88;margin-top:8px"></p>
-  </div>  <div id="main-menu" class="card hidden">
-    <h2 style="margin-top:0;color:var(--white)" class="always-white">Main Menu</h2>
+  </div>
+
+  <!-- Main Menu -->
+  <div id="main-menu" class="card hidden">
+    <h2 style="margin-top:0;color:var(--white)">Main Menu</h2>
     <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
       <button id="btn-chords">View Chords</button>
       <button id="btn-practice">Practice Chords</button>
@@ -132,11 +143,17 @@
       <button id="btn-tune" class="ghost">Tune with GuitarTuna</button>
       <button id="btn-metronome" class="ghost">Metronome</button>
     </div>
-  </div>  <div id="chords" class="card hidden">
+  </div>
+
+  <!-- Chords -->
+  <div id="chords" class="card hidden">
     <h2 style="margin-top:0;color:var(--white)">Basic Chords</h2>
     <div class="chord-grid" id="chord-grid"></div>
-    <button class="back-btn" id="back-from-chords">⬅ Back</button>
-  </div>  <div id="practice" class="card hidden">
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
+
+  <!-- Practice -->
+  <div id="practice" class="card hidden">
     <h2 style="margin-top:0;color:var(--white)">Practice Chords (Random)</h2>
     <div id="practice-chord-display" style="font-size:2rem;margin:16px;color:var(--white)"></div>
     <div style="display:flex;gap:8px;justify-content:center">
@@ -144,23 +161,29 @@
       <button id="play-chord" class="ghost">Play Chord</button>
     </div>
     <p id="practice-feedback" style="margin-top:10px;color:var(--white)"></p>
-    <button class="back-btn" id="back-from-practice">⬅ Back</button>
-  </div>  <div id="strum" class="card hidden">
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
+
+  <!-- Strum -->
+  <div id="strum" class="card hidden">
     <h2 style="margin-top:0;color:var(--white)">Practice Strum</h2>
     <input id="song-search" type="text" placeholder="Search songs..." style="margin-bottom:12px;color:var(--white);background:#222"/>
     <div id="song-list" style="max-height:360px;overflow:auto;padding-right:6px"></div>
     <div style="margin-top:12px">
       <p id="song-pattern" style="font-weight:700;color:var(--white)">Pattern: —</p>
-      <div class="metronome-controls">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px">
         <button id="start-mic" class="ghost">Start Mic Test</button>
         <button id="start-strum-practice" class="ghost">Start Strum Practice</button>
-        <button id="stop-mic" class="ghost">Stop Mic</button>
+        <button id="stop-mic" class="ghost" disabled>Stop Mic</button>
       </div>
       <p id="strum-feedback" style="margin-top:8px;color:var(--white)"></p>
       <div id="strum-highlight"></div>
     </div>
-    <button class="back-btn" id="back-from-strum">⬅ Back</button>
-  </div>  <div id="quiz" class="card hidden">
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
+
+  <!-- Quiz -->
+  <div id="quiz" class="card hidden">
     <h2 style="margin-top:0;color:var(--white)">Chord Recognition Quiz</h2>
     <div style="margin-bottom:12px">
       <button id="start-quiz">Start Quiz</button>
@@ -170,60 +193,70 @@
       <div class="timer" id="timer">5</div>
       <div id="quiz-image" style="margin:8px"></div>
       <div id="quiz-options" style="max-width:420px;margin:0 auto;text-align:center"></div>
-      <p id="quiz-progress" style="margin-top:8px;color:var(--white)"></p>
+      <p id="quiz-progress" style="margin-top:8px"></p>
     </div>
-    <div id="quiz-result" class="hidden" style="margin-top:12px;font-weight:700;color:var(--white)"></div>
-    <button class="back-btn" id="back-from-quiz">⬅ Back</button>
-  </div>  <div id="metronome" class="card hidden">
+    <div id="quiz-result" class="hidden" style="margin-top:12px;font-weight:700"></div>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
+
+  <!-- Metronome -->
+  <div id="metronome" class="card hidden">
     <h2 style="margin-top:0;color:var(--white)">Metronome</h2>
-    <div style="display:flex;gap:8px;align-items:center;justify-content:center">
-      <label class="small-muted">BPM</label>
-      <input id="bpm" type="range" min="40" max="220" value="90" />
-      <span id="bpm-display" class="small-muted">90</span>
+    <div class="metronome-controls">
+      <label for="bpm">BPM</label>
+      <input id="bpm" type="number" value="90" min="30" max="300" style="width:80px" />
+      <button id="start-met" class="ghost">Start</button>
+      <button id="stop-met" class="ghost" disabled>Stop</button>
+      <button id="reset-met" class="ghost">Normal</button>
     </div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-      <button id="start-metronome" class="ghost">Start</button>
-      <button id="stop-metronome" class="ghost">Stop</button>
-    </div>
-    <button class="back-btn" id="back-from-metronome">⬅ Back</button>
-  </div>  <div id="dashboard" class="card hidden">
+    <p id="metronome-status" class="small-muted">Metronome stopped</p>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="card hidden">
     <h2 style="margin-top:0;color:var(--white)">Dashboard</h2>
     <p>Strum Accuracy: <span id="dash-strum">0%</span></p>
     <p>Quiz Score History: <span id="dash-quiz">N/A</span></p>
-    <div id="leaderboard" style="margin-top:12px"></div>
-    <button class="back-btn" id="back-from-dashboard">⬅ Back</button>
-  </div>  <div id="admin-panel" class="card hidden" style="margin-top:20px;">
-    <h2 style="color:var(--white)">Admin Controls</h2>
-    <div id="admin-song-list"></div><h3 style="color:var(--white)">Add Song</h3>
-<input id="new-song-name" placeholder="Song Title (e.g. Beautiful in White - Westlife)">
-<input id="new-song-author" placeholder="Author">
-<input id="new-song-capo" placeholder="Capo (leave blank if none)">
-<input id="new-song-chords" placeholder="Chords e.g. G D Em C">
-<input id="new-song-pattern" placeholder="Pattern e.g. ↓ ↓ ↑ ↑ ↓ ↑">
-<button id="add-song">Add Song</button>
+    <p>Streak: <span id="dash-streak">0</span></p>
+    <div id="leaderboard-container" style="margin-top:12px">
+      <h3 style="margin-bottom:6px;color:var(--white)">Leaderboard</h3>
+      <div id="leaderboard"></div>
+    </div>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
 
-<h3 style="margin-top:12px;color:var(--white)">Manual User Override</h3>
-<input id="override-user" type="text" placeholder="Enter user email">
-<input id="override-streak" type="number" placeholder="Set streak">
-<input id="override-level" type="text" placeholder="Set level">
-<input id="override-highscore" type="number" placeholder="Set high score">
-<button id="apply-override">Apply Changes</button>
+  <!-- Admin Panel (hidden until admin logs in) -->
+  <div id="admin-panel" class="card hidden">
+    <h2 style="margin-top:0;color:var(--white)">Admin Controls</h2>
+    <div id="admin-song-list"></div>
+    <div class="admin-controls">
+      <h3 style="margin-top:8px;color:var(--white)">Manual User Override</h3>
+      <input id="override-user" type="text" placeholder="Enter user email">
+      <input id="override-streak" type="number" placeholder="Set streak">
+      <input id="override-level" type="text" placeholder="Set level">
+      <input id="override-highscore" type="number" placeholder="Set high score">
+      <button id="apply-override">Apply Changes</button>
+      <p class="small-muted">You are admin — edits are written to Firestore.</p>
+    </div>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
+  </div>
+</main>
 
-  </div></main><!-- Firebase + App Logic --><script type="module">
-/* --------------- CONFIG & SETUP ------------------ */
-const ADMIN_EMAIL = "florenzjed12@gmail.com"; // change if needed
+<!-- Firebase & App Logic -->
+<script type="module">
+/* ===========================
+   Firebase initialization
+   =========================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, updatePassword, deleteUser } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { getFirestore, collection, getDocs, onSnapshot, addDoc, setDoc, doc, updateDoc, deleteDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-// Firebase (CDN imports)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, updatePassword, deleteUser } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, setDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
-
-// Your config (from you)
 const firebaseConfig = {
   apiKey: "AIzaSyDkMmF78dFu2dmuzka6xuwpLRD5NRCCJtY",
   authDomain: "guitar-hub-25dfa.firebaseapp.com",
   projectId: "guitar-hub-25dfa",
-  storageBucket: "guitar-hub-25dfa.firebasestorage.app",
+  storageBucket: "guitar-hub-25dfa.appspot.com",
   messagingSenderId: "36479296604",
   appId: "1:36479296604:web:5dbcfb2aec3912f8ba7299",
   measurementId: "G-N4HZW695LF"
@@ -233,7 +266,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* --------------- DOM ------------------ */
+/* ===========================
+   DOM elements / panels
+   =========================== */
 const loginScreen = document.getElementById("login-screen");
 const mainMenu = document.getElementById("main-menu");
 const chordsPanel = document.getElementById("chords");
@@ -244,59 +279,59 @@ const metronomePanel = document.getElementById("metronome");
 const dashboardPanel = document.getElementById("dashboard");
 const adminPanel = document.getElementById("admin-panel");
 const accountPanel = document.getElementById("account-panel");
-const chordGrid = document.getElementById("chord-grid");
-const songListEl = document.getElementById("song-list");
-const adminSongListEl = document.getElementById("admin-song-list");
 
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const authMsg = document.getElementById("auth-msg");
 const burgerBtn = document.getElementById("burger");
 const accountEmail = document.getElementById("account-email");
+const adminBadgeSpot = document.getElementById("admin-badge-spot");
 
-const startMicBtn = document.getElementById("start-mic");
-const stopMicBtn = document.getElementById("stop-mic");
-const startStrumPracticeBtn = document.getElementById("start-strum-practice");
-const strumFeedback = document.getElementById("strum-feedback");
-const strumHighlight = document.getElementById("strum-highlight");
-const songPattern = document.getElementById("song-pattern");
+/* ===========================
+   Utility helpers
+   =========================== */
+function showPanel(panel){
+  // hide all content panels then show requested
+  const panels = [loginScreen, mainMenu, chordsPanel, practicePanel, strumPanel, quizPanel, metronomePanel, dashboardPanel, adminPanel];
+  panels.forEach(p=>{
+    if(p===panel){ p.classList.remove("hidden"); p.classList.add("visible"); }
+    else{ p.classList.add("hidden"); p.classList.remove("visible"); }
+  });
+  // ensure account panel closed
+  accountPanel.style.display = 'none';
+}
 
-const nextChordBtn = document.getElementById("next-chord");
-const practiceDisplay = document.getElementById("practice-chord-display");
-const practiceFeedback = document.getElementById("practice-feedback");
+function goBack(){
+  // hide all inner panels, show main menu
+  const panels = [chordsPanel, practicePanel, strumPanel, quizPanel, metronomePanel, dashboardPanel, adminPanel];
+  panels.forEach(p=>{ p.classList.add("hidden"); p.classList.remove("visible"); });
+  mainMenu.classList.remove("hidden"); mainMenu.classList.add("visible");
+}
 
-const startQuizBtn = document.getElementById("start-quiz");
-const quizArea = document.getElementById("quiz-area");
-const quizResult = document.getElementById("quiz-result");
-const quizImage = document.getElementById("quiz-image");
-const quizOptions = document.getElementById("quiz-options");
-const timerEl = document.getElementById("timer");
-
-const bpmRange = document.getElementById("bpm");
-const bpmDisplay = document.getElementById("bpm-display");
-const startMetBtn = document.getElementById("start-metronome");
-const stopMetBtn = document.getElementById("stop-metronome");
-
-const dashStrum = document.getElementById("dash-strum");
-const dashQuiz = document.getElementById("dash-quiz");
-const leaderboardEl = document.getElementById("leaderboard");
-
-/* --------------- UI - navigation wiring ------------------ */
-document.getElementById("dark-toggle").addEventListener("click", ()=> {
+/* ===========================
+   Theme toggle (keep many texts white in light mode)
+   =========================== */
+document.getElementById("dark-toggle").addEventListener("click", ()=>{
   document.body.classList.toggle("light-mode");
-  // ensure some texts remain white
-  document.querySelectorAll('.always-white').forEach(el=>el.style.color='white');
 });
 
+/* ===========================
+   Account panel / burger
+   =========================== */
 burgerBtn.addEventListener("click", ()=>{
   accountPanel.style.display = accountPanel.style.display === "block" ? "none" : "block";
 });
 
-/* login and auth */
+/* ===========================
+   Toggle password visibility
+   =========================== */
 document.getElementById("toggle-pass").addEventListener("click", ()=>{
   passwordInput.type = passwordInput.type === "password" ? "text" : "password";
 });
 
+/* ===========================
+   Auth: signup, login, continue guest, forgot
+   =========================== */
 document.getElementById("signup-btn").addEventListener("click", async ()=>{
   const email = emailInput.value.trim();
   const pw = passwordInput.value;
@@ -318,8 +353,7 @@ document.getElementById("login-btn").addEventListener("click", async ()=>{
 });
 
 document.getElementById("continue-btn").addEventListener("click", ()=>{
-  loginScreen.classList.add("hidden");
-  mainMenu.classList.remove("hidden");
+  showPanel(mainMenu);
   accountEmail.textContent = "Guest";
 });
 
@@ -334,8 +368,13 @@ document.getElementById("forgot-link").addEventListener("click", async (ev)=>{
 });
 
 document.getElementById("signout-btn").addEventListener("click", async ()=>{
-  try{ await signOut(auth); loginScreen.classList.remove("hidden"); mainMenu.classList.add("hidden"); accountPanel.style.display='none'; accountEmail.textContent='Not signed in'; authMsg.textContent=''; adminPanel.classList.add('hidden'); document.getElementById('admin-badge').style.display='none'; }
-  catch(e){ console.error(e); }
+  try{
+    await signOut(auth);
+    showPanel(loginScreen);
+    accountPanel.style.display='none';
+    accountEmail.textContent='Not signed in';
+    authMsg.textContent='';
+  }catch(e){ console.error(e); }
 });
 
 document.getElementById("change-pass").addEventListener("click", async ()=>{
@@ -354,167 +393,214 @@ document.getElementById("delete-account").addEventListener("click", async ()=>{
   try{
     await deleteUser(auth.currentUser);
     alert("Account deleted.");
-    loginScreen.classList.remove("hidden"); mainMenu.classList.add("hidden");
+    showPanel(loginScreen);
   }catch(e){
     alert("Delete failed: "+e.message);
   }
 });
 
-/* navigation main menu buttons */
-document.getElementById("btn-chords").addEventListener("click", ()=>{
-  hideAll(); chordsPanel.classList.remove("hidden");
-});
-document.getElementById("btn-practice").addEventListener("click", ()=>{
-  hideAll(); practicePanel.classList.remove("hidden");
-});
-document.getElementById("btn-strum").addEventListener("click", ()=>{
-  hideAll(); strumPanel.classList.remove("hidden");
-});
-document.getElementById("btn-quiz").addEventListener("click", ()=>{
-  hideAll(); quizPanel.classList.remove("hidden");
-});
-document.getElementById("btn-metronome").addEventListener("click", ()=>{
-  hideAll(); metronomePanel.classList.remove("hidden");
-});
-document.getElementById("btn-tune").addEventListener("click", ()=> window.open('https://www.guitartuna.com/','_blank'));
-document.getElementById("btn-learn-songs").addEventListener("click", ()=> { alert('Learn Songs: open song list and select a song.'); });
+/* ===========================
+   Firestore: live songs & leaderboard
+   =========================== */
+const songsCol = collection(db, "songs");
+const leaderCol = collection(db, "leaderboard");
 
-document.getElementById("back-from-chords").addEventListener("click", goBack);
-document.getElementById("back-from-practice").addEventListener("click", goBack);
-document.getElementById("back-from-strum").addEventListener("click", goBack);
-document.getElementById("back-from-quiz").addEventListener("click", goBack);
-document.getElementById("back-from-metronome").addEventListener("click", goBack);
-document.getElementById("back-from-dashboard").addEventListener("click", goBack);
+let songsCache = []; // local cache of songs
 
-document.getElementById("show-dashboard").addEventListener("click", ()=>{
-  hideAll(); dashboardPanel.classList.remove("hidden"); accountPanel.style.display='none'; loadLeaderboard();
-});
+// Render songs list in Strum -> "Select" button calls selectSong(name)
+async function fetchSongsOnce(){
+  const snaps = await getDocs(songsCol);
+  songsCache = [];
+  snaps.forEach(s => songsCache.push({ id: s.id, ...s.data() }));
+  renderSongs();
+  renderAdminSongList();
+}
+fetchSongsOnce();
 
-/* helper to hide all main panels */
-function hideAll(){
-  [loginScreen, mainMenu, chordsPanel, practicePanel, strumPanel, quizPanel, metronomePanel, dashboardPanel, adminPanel].forEach(el=>{
-    if(!el) return;
-    el.classList.add("hidden");
+// Real-time leaderboard
+function setupLeaderboardRealtime(){
+  const q = query(leaderCol, orderBy("highScore","desc"), limit(20));
+  onSnapshot(q, snap=>{
+    const lb = document.getElementById("leaderboard");
+    lb.innerHTML = "";
+    snap.forEach(docSnap=>{
+      const d = docSnap.data();
+      const line = document.createElement("div");
+      line.className = "song";
+      line.style.display="flex";
+      line.style.justifyContent="space-between";
+      line.innerHTML = `<div style="text-align:left"><strong>${escapeHtml(d.displayName||"Anon")}</strong><div class="small-muted">Level: ${d.level||'Beginner'} • Streak: ${d.streak||0}</div></div><div style="text-align:right">${d.highScore||0}</div>`;
+      lb.appendChild(line);
+    });
   });
 }
+setupLeaderboardRealtime();
 
-/* goBack */
-function goBack(){
-  hideAll();
-  mainMenu.classList.remove("hidden");
+/* ===========================
+   Chord grid population
+   =========================== */
+const chordNames = ["C","D","E","F","G","A","B","Am","Dm","Em","F#","F#m","Bm","Cmaj7","C#m","G#m","A7","D7","E7"];
+const chordGrid = document.getElementById("chord-grid");
+
+function normalizeForImage(name){
+  // transforms "F#m" -> "fsharpm" (expected file names like fsharpm.png or fsharp.png)
+  if(!name) return "";
+  let s = String(name).toLowerCase().trim();
+  s = s.replace(/\+/g,"plus").replace(/\s+/g,"");
+  s = s.replace(/#/g,"sharp");
+  // sometimes minors have trailing m already - keep it
+  s = s.replace(/\./g,"");
+  return s;
 }
 
-/* --------------- Chords grid + image mapping ------------------ */
-/* image names mapping: c.png, fsharp.png, fsharpm.png, a.png, am.png, etc.
-   transformation rules:
-    - lowercase
-    - '#' -> 'sharp'
-    - 'm' suffix is preserved if present in chord string (eg 'f#m' => 'fsharpm.png')
-    - remove spaces
-*/
-const chordList = ["C","D","E","F","G","A","B","Am","Dm","Em","F#m","Bm","Cmaj7","C#m","G#m","F#","G#","A#","Bb","Gb","Db"];
-function chordToFile(chord){
-  // normalize C#m -> csharpm.png, F# -> fsharp.png
-  let s = chord.toLowerCase().trim();
-  s = s.replace(/\+/g,'plus');
-  s = s.replace(/#/g,'sharp');
-  s = s.replace(/\s+/g,'');
-  // if ends with 'm' already keep, result like 'fsharpm.png' or 'cmaj7' -> cmaj7.png
-  return `image/${s}.png`;
+function imgForChord(name){
+  const base = normalizeForImage(name);
+  // try variations: base.png, basem.png, base.replace("sharp","sharpm").png
+  const candidates = [
+    `image/${base}.png`,
+    `image/${base}m.png`,
+    `image/${base.replace(/sharp/g,"sharpm")}.png`,
+    `image/${base.replace(/m$/,"")}.png` // try without trailing m
+  ];
+  return candidates;
 }
+
 function populateChordGrid(){
   chordGrid.innerHTML = "";
-  chordList.forEach(chord=>{
+  chordNames.forEach(chord=>{
     const card = document.createElement("div");
     card.className = "chord-card";
-    const fname = chordToFile(chord);
-    card.innerHTML = `<div style="font-weight:700;color:var(--white)">${chord}</div>
-      <img src="${fname}" alt="${chord} chord" onerror="this.onerror=null;this.src='image/placeholder.png'">`;
+    const imgs = imgForChord(chord);
+    const imgTag = `<img src="${imgs[0]}" alt="${chord} chord" onerror="(function(el){
+      const cand=[${imgs.map(s=>`'${s}'`).join(",")}];
+      let i=1;
+      while(i<cand.length){
+        const p=cand[i++];
+        if(!p) continue;
+        el.src=p;
+        break;
+      }
+      el.onerror=null;
+    })(this)">`;
+    card.innerHTML = `<div style="font-weight:700;color:var(--white)">${chord}</div>${imgTag}`;
     chordGrid.appendChild(card);
   });
 }
 populateChordGrid();
 
-/* --------------- Practice Chords --------------- */
-let practiceChords = ["C","D","E","F","G","A","B","Am","Dm","Em","F#m","Bm"];
+/* ===========================
+   Practice chords logic
+   =========================== */
+const practiceChords = chordNames.slice();
 let currentPracticeChord = null;
-nextChordBtn.addEventListener("click", ()=>{
+document.getElementById("next-chord").addEventListener("click", ()=>{
   currentPracticeChord = practiceChords[Math.floor(Math.random()*practiceChords.length)];
-  practiceDisplay.textContent = currentPracticeChord;
-  practiceFeedback.textContent = "";
-});
-document.getElementById("play-chord").addEventListener("click", ()=>{
-  // placeholder: could play an audio or synth
-  practiceFeedback.textContent = `Playing ${currentPracticeChord || "(press Next)"} (placeholder)`;
+  document.getElementById("practice-chord-display").textContent = currentPracticeChord;
+  document.getElementById("practice-feedback").innerHTML = `<img src="${imgForChord(currentPracticeChord)[0]}" style="width:150px" onerror="this.onerror=null;this.style.display='none'">`;
 });
 
-/* --------------- Songs list and strum UI --------------- */
-let songs = [
-  {name:"Wonderwall - Oasis", author:"Oasis", capo:"2", chords:"Em7 G Dsus4 A7sus4", pattern:"↓ ↓ ↑ ↑ ↓ ↑"},
-  {name:"Knockin' on Heaven's Door - Bob Dylan", author:"Bob Dylan", capo:"", chords:"G D Am G D C", pattern:"↓ ↓ ↑ ↓ ↑"},
-  {name:"Zombie - The Cranberries", author:"The Cranberries", capo:"", chords:"Em C G D", pattern:"↓ ↑ ↓ ↑"},
-  {name:"Let It Be - The Beatles", author:"The Beatles", capo:"", chords:"C G Am F", pattern:"↓ ↓ ↑ ↓ ↓ ↑ ↓ ↓ ↑"},
-  {name:"Beautiful in White - Westlife", author:"Westlife", capo:"", chords:"G D Em C", pattern:"↓ ↓ ↑ ↑ ↓ ↑"}
-  // you can add more; admin panel can add as well
-];
+/* Play chord placeholder - can be extended to play audio samples */
+document.getElementById("play-chord").addEventListener("click", ()=>{
+  if(!currentPracticeChord){
+    document.getElementById("practice-feedback").textContent = "Click Next to get a chord.";
+    return;
+  }
+  document.getElementById("practice-feedback").textContent = `Playing ${currentPracticeChord} (placeholder)`;
+});
+
+/* ===========================
+   Strum practice: render songs, select, start mic and strum detection
+   =========================== */
+const songListEl = document.getElementById("song-list");
+const songSearch = document.getElementById("song-search");
+const songPatternEl = document.getElementById("song-pattern");
+let selectedSong = null;
+
+function escapeHtml(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/'/g,"&#39;").replace(/\"/g,"&quot;"); }
 
 function renderSongs(filter=""){
   songListEl.innerHTML = "";
-  const q = filter.trim().toLowerCase();
-  songs.forEach((s, idx)=>{
-    if(q && !s.name.toLowerCase().includes(q) && !s.author.toLowerCase().includes(q)) return;
+  const q = (filter||"").trim().toLowerCase();
+  songsCache.forEach(s=>{
+    if(q && !s.name.toLowerCase().includes(q)) return;
     const div = document.createElement("div");
     div.className = "song";
-    div.innerHTML = `<div class="title">${s.name}</div>
-      <div class="meta">Author: ${s.author} ${s.capo?`(Capo ${s.capo})`:''}<br>Chords: ${s.chords}<br>Strumming: ${s.pattern}
-      <div style="margin-top:8px">
-        <button class="ghost select-song" data-idx="${idx}">Select</button>
-      </div>
-      </div>`;
+    div.innerHTML = `<div class="title">${escapeHtml(s.name)}</div>
+      <div class="meta">Chords: ${escapeHtml(s.chords||"")} ${s.capo?` • Capo: ${escapeHtml(s.capo)}`:""}<br>Strumming: ${escapeHtml(s.pattern||"—")}</div>
+      <div style="margin-top:8px"><button class="ghost select-song-btn" data-id="${s.id}">Select</button></div>`;
     songListEl.appendChild(div);
   });
-  // wire select buttons
-  document.querySelectorAll('.select-song').forEach(btn=>{
-    btn.addEventListener('click', (ev)=>{
-      const idx = parseInt(ev.currentTarget.dataset.idx);
-      selectSong(idx);
+  // bind select buttons
+  document.querySelectorAll(".select-song-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.dataset.id;
+      selectSongById(id);
     });
   });
 }
-renderSongs();
+songSearch && songSearch.addEventListener("input", ()=> renderSongs(songSearch.value));
 
-document.getElementById("song-search").addEventListener("input",(e)=>renderSongs(e.target.value));
-
-function selectSong(idx){
-  const song = songs[idx];
+function selectSongById(id){
+  const song = songsCache.find(x=>x.id===id);
   if(!song) return;
-  songPattern.textContent = `Pattern: ${song.pattern} — Chords: ${song.chords}`;
-  songPattern.dataset.pattern = song.pattern;
-  strumFeedback.textContent = "";
+  selectedSong = song;
+  songPatternEl.textContent = `Pattern: ${song.pattern || "—"} • Chords: ${song.chords || "—"}`;
+  document.getElementById("strum-feedback").textContent = "";
+  // prepare highlight pattern
+  currentPattern = song.pattern ? parsePattern(song.pattern) : ["↓","↓","↑","↓"];
+  currentStrumIndex = 0;
+  highlightStrum();
 }
 
-/* --------------- Strum Detection (basic amplitude-based) --------------- */
-let audioContext, analyser, dataArray, sourceStream;
-let strumActive = false;
-let currentPattern = [];
-let currentStrumIndex = 0;
-let hits = 0, totalStrums = 0;
+/* Parse pattern string like "↓ ↓ ↑ ↑ ↓ ↑" into array */
+function parsePattern(str){
+  if(!str) return [];
+  return str.split(/\s+/).filter(Boolean).map(s=>s.trim());
+}
 
-async function startMic(){
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ strumFeedback.textContent = "Mic not supported"; return; }
+/* Load songs from cache initially */
+renderSongs();
+
+/* Microphone / strum detection basic setup */
+let audioContext, analyser, dataArray, sourceStream, sourceNode, freqDataArray;
+let currentPattern = ["↓","↓","↑","↓"];
+let currentStrumIndex = 0;
+let hits = 0;
+let totalStrums = 0;
+let strumActive = false;
+const strumFeedback = document.getElementById("strum-feedback");
+const startMicBtn = document.getElementById("start-mic");
+const startStrumPracticeBtn = document.getElementById("start-strum-practice");
+const stopMicBtn = document.getElementById("stop-mic");
+
+function highlightStrum(){
+  const highlight = document.getElementById("strum-highlight");
+  if(!currentPattern || currentPattern.length===0){ highlight.textContent = ""; return; }
+  highlight.innerHTML = currentPattern.map((s,i)=> i===currentStrumIndex ? `<span style="padding:6px;border-radius:6px;background:#2b2;color:#000;font-weight:700">${s}</span>` : `<span style="opacity:0.6">${s}</span>`).join(" ");
+}
+
+async function startMic(){ // general mic activation for tests
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    strumFeedback.textContent = "Mic not supported.";
+    return;
+  }
+  if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
   try{
-    if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     sourceStream = stream;
-    source = audioContext.createMediaStreamSource(stream);
+    if(sourceNode) sourceNode.disconnect();
+    sourceNode = audioContext.createMediaStreamSource(stream);
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 2048;
-    source.connect(analyser);
+    sourceNode.connect(analyser);
     const bufferLength = analyser.fftSize;
     dataArray = new Uint8Array(bufferLength);
-
-    strumActive = false; // mic test only
-    strumFeedback.textContent = "Mic active — use Start Strum Practice to test patterns.";
+    freqDataArray = new Uint8Array(analyser.frequencyBinCount);
+    stopMicBtn.disabled = false;
+    startMicBtn.disabled = true;
+    strumFeedback.textContent = "Mic active — try a strum (test mode)";
+    // one-off check for "high" vs "low" (pitch) just as info
+    requestAnimationFrame(checkAudioLevels);
   }catch(e){
     console.error(e);
     strumFeedback.textContent = "Mic access denied.";
@@ -522,143 +608,178 @@ async function startMic(){
 }
 
 function stopMic(){
-  if(sourceStream){
-    sourceStream.getTracks().forEach(t=>t.stop());
-    sourceStream=null;
-  }
-  strumActive=false;
-  strumFeedback.textContent = "Mic stopped.";
+  try{
+    if(sourceStream){
+      sourceStream.getTracks().forEach(t=>t.stop());
+      sourceStream = null;
+    }
+    if(sourceNode){ sourceNode.disconnect(); sourceNode=null; }
+    stopMicBtn.disabled = true;
+    startMicBtn.disabled = false;
+    strumFeedback.textContent = "Mic stopped.";
+    strumActive = false;
+    highlightStrum();
+  }catch(e){ console.error(e); }
 }
 
-startMicBtn.addEventListener("click", startMic);
-stopMicBtn.addEventListener("click", stopMic);
-
-/* convert pattern string into array of arrows, eg "↓ ↓ ↑" -> ["↓","↓","↑"] */
-function patternToArray(p){
-  return p.split(/\s+/).filter(Boolean);
-}
-
-/* Basic detection: detect energy spikes and attempt to infer direction by sign of slope:
-   - This is heuristic: compare immediate previous samples average to find rising (down stroke) vs falling (up stroke)
-*/
-function startStrumPractice(){
-  const patternStr = songPattern.dataset.pattern || "↓ ↓ ↑ ↓";
-  currentPattern = patternToArray(patternStr);
-  currentStrumIndex = 0; hits=0; totalStrums=0;
-  if(!analyser){
-    strumFeedback.textContent = "Start mic first.";
-    return;
-  }
-  strumActive = true;
-  highlightStrum();
-  strumFeedback.textContent = "Strum the pattern!";
-  requestAnimationFrame(strumLoop);
-}
-startStrumPracticeBtn.addEventListener("click", startStrumPractice);
-
-let lastFrame = null;
-function strumLoop(){
-  if(!strumActive) return;
+/* checkAudioLevels for mic test (not practice) */
+function checkAudioLevels(){
+  if(!analyser) return;
   analyser.getByteTimeDomainData(dataArray);
-  // compute simple envelope
-  let avg=0;
-  for(let i=0;i<dataArray.length;i++){
-    avg += Math.abs(dataArray[i]-128);
-  }
+  // compute avg amplitude
+  let avg = 0;
+  for(let i=0;i<dataArray.length;i++){ avg += Math.abs(dataArray[i]-128); }
   avg = avg / dataArray.length;
-  // threshold for detection (tweakable)
-  if(!lastFrame) lastFrame = avg;
-  // detect significant spike
-  if(avg - lastFrame > 8){ // rising spike -> likely down strum
-    detectedStrum("↓");
-  } else if (lastFrame - avg > 10){ // falling spike -> maybe up strum
-    detectedStrum("↑");
-  }
-  lastFrame = avg;
-  requestAnimationFrame(strumLoop);
+  // compute spectral centroid to guess pitch
+  analyser.getByteFrequencyData(freqDataArray);
+  let num=0, den=0;
+  for(let i=0;i<freqDataArray.length;i++){ num += i*freqDataArray[i]; den += freqDataArray[i]; }
+  const centroid = den>0 ? num/den : 0;
+  // show info
+  strumFeedback.textContent = `Mic: amplitude ${Math.round(avg)} • centroid ${Math.round(centroid)}`;
+  if(sourceStream) requestAnimationFrame(checkAudioLevels);
 }
 
-function detectedStrum(sym){
-  // debounce by small delay
-  const now = Date.now();
-  if(!detectedStrum.lastTime) detectedStrum.lastTime = 0;
-  if(now - detectedStrum.lastTime < 200) return;
-  detectedStrum.lastTime = now;
+/* STRUM PRACTICE detection loop:
+   - uses amplitude to detect strum "event"
+   - uses spectral centroid to guess up vs down (approx heuristic)
+*/
+let lastEnvelope = 0;
+let lastEventTime = 0;
+const enThreshold = 8; // amplitude threshold for strum event
+const minEventGap = 150; // ms
 
-  totalStrums++;
-  const expected = currentPattern[currentStrumIndex] || null;
-  if(expected === sym){
-    hits++;
-    currentStrumIndex++;
-    strumFeedback.textContent = `Good — ${sym}`;
-    highlightStrum(true);
+async function startStrumPractice(){
+  // ensure mic is active
+  if(!sourceStream) await startMic();
+  if(!analyser){ strumFeedback.textContent="Mic unavailable"; return; }
+  // prepare pattern
+  if(!currentPattern || currentPattern.length===0) currentPattern = ["↓","↓","↑","↓"];
+  currentStrumIndex = 0; hits=0; totalStrums=0; strumActive = true;
+  highlightStrum();
+  strumFeedback.textContent = "Strum practice started. Follow the highlighted pattern.";
+  requestAnimationFrame(strumDetectionLoop);
+}
+
+function strumDetectionLoop(timestamp){
+  if(!strumActive || !analyser) return;
+  analyser.getByteTimeDomainData(dataArray);
+  let env = 0;
+  for(let i=0;i<dataArray.length;i++){ env += Math.abs(dataArray[i]-128); }
+  env = env / dataArray.length;
+  const now = performance.now();
+  // detect event if envelope crosses threshold and gap satisfied
+  if(env > enThreshold && lastEnvelope <= enThreshold && (now - lastEventTime) > minEventGap){
+    // on event: determine up/down using centroid heuristic
+    analyser.getByteFrequencyData(freqDataArray);
+    let num=0, den=0;
+    for(let i=0;i<freqDataArray.length;i++){ num += i*freqDataArray[i]; den += freqDataArray[i]; }
+    const centroid = den>0 ? num/den : 0;
+    // heuristic: higher centroid -> upstroke, lower -> downstroke
+    const detected = centroid > (freqDataArray.length*0.15) ? "↑" : "↓";
+    totalStrums++;
+    if(detected === currentPattern[currentStrumIndex]){
+      hits++;
+      markPatternStep(currentStrumIndex, true);
+      currentStrumIndex++;
+      strumFeedback.textContent = `Good: ${detected}`;
+    } else {
+      markPatternStep(currentStrumIndex, false);
+      strumFeedback.textContent = `Wrong: got ${detected}, expected ${currentPattern[currentStrumIndex]}`;
+    }
+    // update accuracy in dashboard UI immediately
+    const accuracy = totalStrums>0 ? Math.round((hits/totalStrums)*100) : 0;
+    document.getElementById("dash-strum").textContent = accuracy + "%";
+    lastEventTime = now;
     if(currentStrumIndex >= currentPattern.length){
       strumFeedback.textContent = "Pattern completed!";
-      strumActive=false;
-      // update dashboard stat
-      const accuracy = Math.round((hits/totalStrums)*100);
-      dashStrum.textContent = accuracy + "%";
-      // store to firestore leaderboard for current user if logged
-      if(auth.currentUser){
-        saveStrumResult(accuracy);
-      }
+      strumActive = false;
+      // update Firestore stats for user if logged in
+      saveStrumResult(accuracy);
       return;
     }
-  } else {
-    strumFeedback.textContent = `Wrong — detected ${sym} expected ${expected}`;
-    highlightStrum(false);
   }
-  const accuracy = Math.round((hits/totalStrums)*100);
-  dashStrum.textContent = accuracy + "%";
+  lastEnvelope = env;
+  requestAnimationFrame(strumDetectionLoop);
 }
 
-/* highlight strum pattern, specifying last result true/false for coloring */
-function highlightStrum(lastGood){
-  const frag = currentPattern.map((s,i)=>{
-    if(i < currentStrumIndex) return `<span style="color:lime"> ${s} </span>`;
-    if(i === currentStrumIndex) return `<span style="font-weight:800; background:rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px">${s}</span>`;
-    return `<span style="color:var(--white)">${s}</span>`;
-  }).join(" ");
-  strumHighlight.innerHTML = frag;
+function markPatternStep(index, ok){
+  const highlight = document.getElementById("strum-highlight");
+  const parts = currentPattern.map((s,i)=> {
+    if(i<index) return `<span style="opacity:0.6">${s}</span>`;
+    if(i===index) return ok ? `<span style="padding:6px;border-radius:6px;background:#2b2;color:#000;font-weight:700">${s}</span>` : `<span style="padding:6px;border-radius:6px;background:#f66;color:#000;font-weight:700">${s}</span>`;
+    return `<span style="opacity:0.6">${s}</span>`;
+  });
+  highlight.innerHTML = parts.join(" ");
 }
 
-/* --------------- Metronome --------------- */
-let metronomeInterval = null;
-let metAudioCtx = null;
-bpmRange.addEventListener("input", ()=> bpmDisplay.textContent = bpmRange.value);
+/* stop mic button */
+stopMicBtn.addEventListener("click", stopMic);
+startMicBtn.addEventListener("click", startMic);
+startStrumPracticeBtn.addEventListener("click", startStrumPractice);
 
-startMetBtn.addEventListener("click", ()=>{
-  if(!metAudioCtx) metAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const bpm = parseInt(bpmRange.value);
-  const intervalMs = 60000 / bpm;
-  if(metronomeInterval) clearInterval(metronomeInterval);
-  metronomeInterval = setInterval(()=> {
-    // beep using oscillator
-    const o = metAudioCtx.createOscillator();
-    const g = metAudioCtx.createGain();
-    o.type = "sine";
-    o.frequency.value = 880;
-    g.gain.value = 0.2;
-    o.connect(g); g.connect(metAudioCtx.destination);
-    o.start();
-    setTimeout(()=>{ o.stop(); }, 80);
-  }, intervalMs);
-});
-stopMetBtn.addEventListener("click", ()=> {
-  if(metronomeInterval) clearInterval(metronomeInterval);
-  metronomeInterval = null;
-});
+/* save strum accuracy to Firestore (dashboard) */
+async function saveStrumResult(accuracy){
+  try{
+    const user = auth.currentUser;
+    if(!user) return;
+    // find leaderboard entry for this user by email (displayName stored)
+    const snaps = await getDocs(leaderCol);
+    let docId = null;
+    snaps.forEach(s=>{ if(s.data().displayName === user.email) docId = s.id; });
+    if(docId){
+      await updateDoc(doc(db,"leaderboard",docId),{ lastPlayed: Date.now(), strumAccuracy: accuracy, streak: ( (snapshotsVal(snaps, docId, 'streak')||0)+1 ) });
+    } else {
+      await setDoc(doc(db,"leaderboard",user.email), {
+        displayName: user.email, highScore: 0, lastPlayed: Date.now(), level: "Beginner", streak: 1, strumAccuracy: accuracy
+      });
+    }
+    // update dashboard UI by reloading leaderboard
+  }catch(e){ console.error("saveStrumResult err",e); }
+}
 
-/* --------------- Quiz logic --------------- */
-let quizChords = ["C","D","E","F","G","A","B","Am","Dm","Em","F#m","Bm","Cmaj7","C#m","G#m"];
-let quizScore = 0, quizCount = 0, quizTotal = 10;
-let quizTimer = null;
+function snapshotsVal(snaps, id, field){
+  const s = snaps.docs ? snaps.docs.find(d=>d.id===id) : snaps.find(d=>d.id===id);
+  if(!s) return null;
+  return s.data ? s.data()[field] : s[field];
+}
 
-startQuizBtn.addEventListener("click", ()=>{
-  quizScore = 0; quizCount = 0;
+/* ===========================
+   Quiz logic (chords quiz)
+   =========================== */
+const quizChords = chordNames.slice(); // include many chords
+let quizScore = 0;
+let quizCount = 0;
+const quizTotal = 10;
+const quizArea = document.getElementById("quiz-area");
+const quizResult = document.getElementById("quiz-result");
+const quizImage = document.getElementById("quiz-image");
+const quizOptions = document.getElementById("quiz-options");
+const timerEl = document.getElementById("timer");
+let quizTimer;
+let currentQuizChord = null;
+
+function shuffleArray(array){
+  const arr = array.slice();
+  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  return arr;
+}
+
+document.getElementById("start-quiz").addEventListener("click", ()=>{
+  quizScore=0; quizCount=0;
   quizResult.classList.add("hidden");
   quizArea.classList.remove("hidden");
+  document.getElementById("start-quiz").style.display="none";
+  document.getElementById("reset-quiz").style.display="inline-block";
   nextQuizChord();
+});
+
+document.getElementById("reset-quiz").addEventListener("click", ()=>{
+  quizScore=0; quizCount=0;
+  quizArea.classList.add("hidden");
+  quizResult.classList.add("hidden");
+  document.getElementById("start-quiz").style.display="inline-block";
+  document.getElementById("reset-quiz").style.display="none";
 });
 
 function nextQuizChord(){
@@ -666,32 +787,35 @@ function nextQuizChord(){
     quizArea.classList.add("hidden");
     quizResult.classList.remove("hidden");
     quizResult.textContent = `Quiz Completed! Score: ${quizScore}/${quizTotal}`;
-    // record to firestore if logged
-    if(auth.currentUser){
-      saveQuizResult(quizScore);
-    }
+    // save to leaderboard highScore if greater
+    saveQuizResult(quizScore);
+    document.getElementById("start-quiz").style.display="inline-block";
+    document.getElementById("reset-quiz").style.display="none";
     return;
   }
-  const ch = quizChords[Math.floor(Math.random()*quizChords.length)];
-  quizImage.innerHTML = `<div style="font-size:48px;color:var(--white)">${ch}</div>`; // placeholder; image could be used
+  currentQuizChord = quizChords[Math.floor(Math.random()*quizChords.length)];
+  // show image if available
+  const imgCandidates = imgForChord(currentQuizChord);
+  quizImage.innerHTML = `<img src="${imgCandidates[0]}" alt="${currentQuizChord}" style="width:160px" onerror="this.onerror=null;this.style.display='none'">`;
   quizOptions.innerHTML = "";
-  const options = shuffleArray(quizChords).slice(0,4);
-  if(!options.includes(ch)) options[Math.floor(Math.random()*4)] = ch;
-  options.forEach(o=>{
+  const choices = shuffleArray(quizChords).slice(0,4);
+  if(!choices.includes(currentQuizChord)) choices[Math.floor(Math.random()*4)] = currentQuizChord;
+  choices.forEach(c=>{
     const btn = document.createElement("button");
-    btn.textContent = o;
+    btn.textContent = c;
     btn.addEventListener("click", ()=>{
-      if(o===ch) quizScore++;
+      if(c===currentQuizChord) quizScore++;
       quizCount++;
+      clearInterval(quizTimer);
       nextQuizChord();
     });
     quizOptions.appendChild(btn);
   });
-  startQuizCountdown();
+  startQuizTimer();
 }
 
-function startQuizCountdown(){
-  let time = 6;
+function startQuizTimer(){
+  let time = 7; // default quiz timer (editable later)
   timerEl.textContent = time;
   clearInterval(quizTimer);
   quizTimer = setInterval(()=>{
@@ -702,216 +826,287 @@ function startQuizCountdown(){
       quizCount++;
       nextQuizChord();
     }
-  }, 1000);
+  },1000);
 }
 
-function shuffleArray(a){ return a.sort(()=>Math.random()-0.5); }
-
-/* --------------- Firestore: leaderboard/songs persistence --------------- */
-
-/* Save strum result to Firestore leaderboard (updates existing doc by uid or creates) */
-async function saveStrumResult(accuracy){
-  try{
-    const user = auth.currentUser;
-    if(!user) return;
-    const id = user.uid;
-    const docRef = doc(db,"leaderboard",id);
-    await setDoc(docRef,{
-      displayName: user.email,
-      highScore: Math.max(0,accuracy),
-      lastPlayed: Date.now(),
-      level: "Beginner",
-      streak: 0
-    }, { merge: true });
-  }catch(e){ console.error("saveStrumResult:",e); }
-}
-
-/* Save quiz result (simple) */
+/* Save quiz result to user leaderboard highScore if better */
 async function saveQuizResult(score){
   try{
     const user = auth.currentUser;
     if(!user) return;
-    const id = user.uid;
-    const docRef = doc(db,"leaderboard",id);
-    // merge: append lastPlayed and highScore if greater
-    await setDoc(docRef,{
-      displayName: user.email,
-      highScore: score,
-      lastPlayed: Date.now()
-    }, { merge: true });
-  }catch(e){ console.error("saveQuizResult:",e); }
-}
-
-/* Load leaderboard (top 10) */
-async function loadLeaderboard(){
-  leaderboardEl.innerHTML = "<em>Loading leaderboard...</em>";
-  try{
-    const q = query(collection(db,"leaderboard"), orderBy("highScore","desc"), limit(10));
-    const snap = await getDocs(q);
-    let html = "<h3 style='color:var(--white)'>Top Players</h3><ol style='text-align:left'>";
-    snap.forEach(d=>{
-      const data = d.data();
-      html += `<li>${data.displayName || "-"} — ${data.highScore || 0} pts — Streak: ${data.streak || 0}</li>`;
-    });
-    html += "</ol>";
-    leaderboardEl.innerHTML = html;
-  }catch(e){ console.error(e); leaderboardEl.innerHTML = "<em>Failed to load leaderboard</em>"; }
-}
-
-/* Firestore: songs CRUD for admin */
-async function loadSongsFromDb(){
-  // load songs collection and populate local songs array and UI
-  try{
-    const snap = await getDocs(collection(db,"songs"));
-    const arr = [];
-    snap.forEach(d=>{
-      const data = d.data();
-      arr.push({...data, __id: d.id});
-    });
-    // replace local songs with DB songs (if any)
-    if(arr.length) songs = arr.map(s=>({name:s.name, author:s.author||"", capo:s.capo||"", chords:s.chords||"", pattern:s.pattern||""}));
-    renderSongs();
-    renderAdminSongs();
-  }catch(e){ console.error("loadSongsFromDb", e); }
-}
-async function renderAdminSongs(){
-  adminSongListEl.innerHTML = "";
-  try{
-    const snaps = await getDocs(collection(db,"songs"));
-    snaps.forEach(d=>{
-      const data = d.data();
-      const id = d.id;
-      const div = document.createElement("div");
-      div.style.borderTop = "1px solid #333";
-      div.style.padding = "8px 0";
-      div.innerHTML = `<strong style="color:var(--white)">${data.name}</strong><div class="small-muted">Author: ${data.author || ''} | Capo: ${data.capo || ''}</div>
-        <div style="margin-top:6px;">
-          <button class="ghost edit-song" data-id="${id}">Edit</button>
-          <button class="ghost delete-song" data-id="${id}">Delete</button>
-        </div>`;
-      adminSongListEl.appendChild(div);
-    });
-    // wire edit/delete
-    adminSongListEl.querySelectorAll('.edit-song').forEach(b=>{
-      b.addEventListener('click', async (ev)=>{
-        const id = ev.currentTarget.dataset.id;
-        const docRef = doc(db,"songs",id);
-        const snap = await getDocs(collection(db,"songs")); // simple fetch to get data (or use getDoc)
-        // show a prompt to edit
-        const cur = (await (await fetchSongById(id))).data;
-        const newName = prompt("Song name:", cur.name || "");
-        if(newName === null) return;
-        const newAuthor = prompt("Author:", cur.author || "");
-        const newCapo = prompt("Capo (blank if none):", cur.capo || "");
-        const newChords = prompt("Chords:", cur.chords || "");
-        const newPattern = prompt("Pattern:", cur.pattern || "");
-        await updateDoc(docRef, { name:newName, author:newAuthor, capo:newCapo, chords:newChords, pattern:newPattern });
-        alert("Updated");
-        loadSongsFromDb();
+    const snaps = await getDocs(leaderCol);
+    let docId = null;
+    let docData = null;
+    snaps.forEach(s=>{ if(s.data().displayName === user.email){ docId = s.id; docData = s.data(); }});
+    if(docId){
+      if((docData.highScore||0) < score){
+        await updateDoc(doc(db,"leaderboard",docId),{ highScore: score, lastPlayed: Date.now() });
+      } else {
+        await updateDoc(doc(db,"leaderboard",docId),{ lastPlayed: Date.now() });
+      }
+    } else {
+      await setDoc(doc(db,"leaderboard",user.email),{
+        displayName: user.email, highScore: score, lastPlayed: Date.now(), level: "Beginner", streak: 0
       });
-    });
-    adminSongListEl.querySelectorAll('.delete-song').forEach(b=>{
-      b.addEventListener('click', async (ev)=>{
-        const id = ev.currentTarget.dataset.id;
-        if(!confirm('Delete this song?')) return;
-        await deleteDoc(doc(db,"songs",id));
-        alert('Deleted');
-        loadSongsFromDb();
-      });
-    });
-  }catch(e){ console.error(e); adminSongListEl.innerHTML = "<em>Failed admin songs load</em>"; }
+    }
+  }catch(e){ console.error("saveQuizResult err", e); }
 }
 
-async function fetchSongById(id){
-  try{
-    const snap = await getDocs(collection(db,"songs"));
-    let out = null;
-    snap.forEach(d=>{
-      if(d.id === id) out = {id:d.id, data:d.data()};
-    });
-    return {data:out?out.data:null};
-  }catch(e){ return {data:null}; }
-}
-
-document.getElementById("add-song").addEventListener("click", async ()=>{
-  const name = document.getElementById("new-song-name").value.trim();
-  const author = document.getElementById("new-song-author").value.trim();
-  const capo = document.getElementById("new-song-capo").value.trim();
-  const chordsField = document.getElementById("new-song-chords").value.trim();
-  const pattern = document.getElementById("new-song-pattern").value.trim();
-  if(!name){ alert("Enter a name"); return; }
-  try{
-    await addDoc(collection(db,"songs"), { name, author, capo, chords:chordsField, pattern });
-    alert("Song added to DB");
-    loadSongsFromDb();
-  }catch(e){ alert("Failed to add song: "+e.message); }
+/* ===========================
+   Metronome
+   =========================== */
+let metronomeInterval = null;
+let metronomeAudioCtx = null;
+document.getElementById("start-met").addEventListener("click", startMetronome);
+document.getElementById("stop-met").addEventListener("click", stopMetronome);
+document.getElementById("reset-met").addEventListener("click", ()=>{
+  document.getElementById("bpm").value = 90;
+  document.getElementById("metronome-status").textContent = "Normal (90 BPM)";
 });
 
-/* manual override admin */
+function beep(time){
+  if(!metronomeAudioCtx) metronomeAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const o = metronomeAudioCtx.createOscillator();
+  const g = metronomeAudioCtx.createGain();
+  o.connect(g); g.connect(metronomeAudioCtx.destination);
+  o.type = "sine";
+  o.frequency.value = 1000;
+  g.gain.value = 0.001;
+  o.start(time);
+  g.gain.exponentialRampToValueAtTime(0.2, time + 0.001);
+  g.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+  o.stop(time + 0.13);
+}
+
+function startMetronome(){
+  const bpm = parseInt(document.getElementById("bpm").value) || 90;
+  if(metronomeInterval){ stopMetronome(); }
+  const interval = 60000 / bpm;
+  document.getElementById("metronome-status").textContent = `Running @ ${bpm} BPM`;
+  document.getElementById("start-met").disabled = true;
+  document.getElementById("stop-met").disabled = false;
+  let last = performance.now();
+  metronomeInterval = setInterval(()=>{
+    // schedule beep
+    try{
+      beep(metronomeAudioCtx.currentTime + 0.01);
+    }catch(e){}
+  }, interval);
+}
+
+function stopMetronome(){
+  if(metronomeInterval) clearInterval(metronomeInterval);
+  metronomeInterval = null;
+  document.getElementById("metronome-status").textContent = "Stopped";
+  document.getElementById("start-met").disabled = false;
+  document.getElementById("stop-met").disabled = true;
+}
+
+/* ===========================
+   Navigation: wire main menu buttons
+   =========================== */
+document.getElementById("btn-chords").addEventListener("click", ()=>{
+  showPanel(chordsPanel);
+});
+document.getElementById("btn-practice").addEventListener("click", ()=>{
+  showPanel(practicePanel);
+});
+document.getElementById("btn-strum").addEventListener("click", ()=>{
+  showPanel(strumPanel);
+});
+document.getElementById("btn-quiz").addEventListener("click", ()=>{
+  showPanel(quizPanel);
+});
+document.getElementById("btn-metronome").addEventListener("click", ()=>{
+  showPanel(metronomePanel);
+});
+document.getElementById("btn-tune").addEventListener("click", ()=>{
+  window.open('https://www.guitartuna.com/', '_blank');
+});
+document.getElementById("btn-learn-songs").addEventListener("click", ()=>{
+  showPanel(strumPanel);
+});
+
+/* ===========================
+   Firestore admin: render songs and allow edit/delete for admin
+   =========================== */
+function renderAdminSongList(){
+  const list = document.getElementById("admin-song-list");
+  if(!list) return;
+  list.innerHTML = "<h3 style='color:var(--white)'>Songs (editable)</h3>";
+  songsCache.forEach(s=>{
+    const d = document.createElement("div");
+    d.className = "song";
+    d.innerHTML = `<div><strong>${escapeHtml(s.name)}</strong> <span class="small-muted">by ${escapeHtml(s.author||'')}</span></div>
+      <div class="small-muted">Chords: ${escapeHtml(s.chords||'')} • Pattern: ${escapeHtml(s.pattern||'')}</div>
+      <div style="margin-top:8px">
+        <button class="ghost admin-edit-song" data-id="${s.id}">Edit</button>
+        <button class="ghost admin-delete-song" data-id="${s.id}">Delete</button>
+      </div>`;
+    list.appendChild(d);
+  });
+  // bind edit/delete
+  document.querySelectorAll(".admin-edit-song").forEach(b=>{
+    b.addEventListener("click", async ()=>{
+      const id = b.dataset.id;
+      const song = songsCache.find(x=>x.id===id);
+      if(!song) return;
+      const newName = prompt("Song name:", song.name) || song.name;
+      const newAuthor = prompt("Author:", song.author||"") || song.author;
+      const newChords = prompt("Chords:", song.chords||"") || song.chords;
+      const newPattern = prompt("Pattern (e.g. ↓ ↓ ↑):", song.pattern||"") || song.pattern;
+      await updateDoc(doc(db,"songs",id), { name: newName, author: newAuthor, chords: newChords, pattern: newPattern });
+      alert("Updated.");
+    });
+  });
+  document.querySelectorAll(".admin-delete-song").forEach(b=>{
+    b.addEventListener("click", async ()=>{
+      if(!confirm("Delete song permanently?")) return;
+      const id = b.dataset.id;
+      await deleteDoc(doc(db,"songs",id));
+      alert("Deleted.");
+    });
+  });
+}
+
+/* Admin: apply manual user override */
 document.getElementById("apply-override").addEventListener("click", async ()=>{
-  const email = document.getElementById("override-user").value;
+  const email = document.getElementById("override-user").value.trim();
+  if(!email){ alert("Enter email"); return; }
   const streak = parseInt(document.getElementById("override-streak").value)||0;
   const level = document.getElementById("override-level").value || "Beginner";
   const highScore = parseInt(document.getElementById("override-highscore").value)||0;
-  if(!email){ alert("Provide email"); return; }
-  try{
-    // documents keyed by email sanitized
-    const docId = btoa(email).replace(/=/g,'');
-    await setDoc(doc(db,"leaderboard",docId),{
-      displayName: email,
-      streak,
-      level,
-      highScore,
-      lastPlayed: Date.now()
-    }, { merge:true });
-    alert("User updated/created!");
-    loadLeaderboard();
-  }catch(e){ alert("Failed: "+e.message); }
-});
-
-/* helper to startup: load songs from db to override local songs if DB has them */
-loadSongsFromDb();
-
-/* --------------- Auth state change & admin detection --------------- */
-onAuthStateChanged(auth, (user)=>{
-  if(user){
-    accountEmail.textContent = user.email || "User";
-    loginScreen.classList.add("hidden");
-    mainMenu.classList.remove("hidden");
-    authMsg.textContent = "";
-    // show admin tools if admin
-    if(user.email === ADMIN_EMAIL){
-      adminPanel.classList.remove("hidden");
-      document.getElementById('admin-badge').style.display='block';
-      renderAdminSongs();
-    } else {
-      adminPanel.classList.add('hidden');
-      document.getElementById('admin-badge').style.display='none';
-    }
+  // search leaderboard for matching displayName
+  const snaps = await getDocs(leaderCol);
+  let userDoc = null;
+  snaps.forEach(d=>{ if(d.data().displayName === email) userDoc = d.id; });
+  if(userDoc){
+    await updateDoc(doc(db,"leaderboard",userDoc),{ streak, level, highScore, lastPlayed: Date.now() });
+    alert("User updated successfully!");
   } else {
-    accountEmail.textContent = "Not signed in";
+    await setDoc(doc(db,"leaderboard",email),{ displayName: email, streak, level, highScore, lastPlayed: Date.now() });
+    alert("New user created and updated!");
   }
 });
 
-/* --------------- Helper: Save leaderboard sample data (if you want) --------------- */
-async function seedLeaderboardSample(){
-  try{
-    await setDoc(doc(db,"leaderboard","sample1"),{displayName:"player1@example.com", highScore:90, lastPlayed: Date.now(), level:"Veteran", streak:3});
-    await setDoc(doc(db,"leaderboard","sample2"),{displayName:"player2@example.com", highScore:70, lastPlayed: Date.now(), level:"Beginner", streak:1});
-  }catch(e){ console.error("seed:",e); }
+/* ===========================
+   Firestore listeners to keep local cache in sync & refresh UI
+   =========================== */
+onSnapshot(songsCol, snap=>{
+  songsCache = [];
+  snap.forEach(d=> songsCache.push({ id: d.id, ...d.data() }));
+  renderSongs();
+  renderAdminSongList();
+});
+onSnapshot(leaderCol, snap=>{
+  // update dashboard leaderboard by re-calling setupLeaderboardRealtime if needed
+  // (we already have realtime listener for top 20, but we keep this to ensure local updates)
+});
+
+/* Helper to add a sample song (only if songs collection empty) */
+async function ensureSampleData(){
+  const snaps = await getDocs(songsCol);
+  if(snaps.size===0){
+    const samples = [
+      { name: "Wonderwall - Oasis", author: "Oasis", chords: "Em7 G Dsus4 A7sus4", pattern: "↓ ↓ ↑ ↑ ↓ ↑", capo: "" },
+      { name: "Let It Be - The Beatles", author: "The Beatles", chords: "C G Am F", pattern: "↓ ↓ ↑ ↓ ↓ ↑", capo: "" },
+      { name: "Beautiful in White - Westlife", author: "Westlife", chords: "G D Em C", pattern: "↓ ↓ ↑ ↑ ↓ ↑", capo: "" }
+    ];
+    for(const s of samples) await addDoc(songsCol, s);
+  }
 }
-//seedLeaderboardSample();
+ensureSampleData();
 
-/* --------------- Small polish --------------- */
-// keep some text white in light mode
-document.querySelectorAll('.always-white').forEach(el=>el.style.color='white');
+/* ===========================
+   On auth state changed: update UI and admin availability
+   =========================== */
+const ADMIN_EMAIL = "florenzjed12@gmail.com"; // hardcoded admin
+onAuthStateChanged(auth, user=>{
+  if(user){
+    accountEmail.textContent = user.email || user.displayName || "User";
+    // show dashboard and main menu
+    showPanel(mainMenu);
+    // show admin panel if matching email
+    if(user.email === ADMIN_EMAIL){
+      adminPanel.classList.remove("hidden"); adminPanel.classList.add("visible");
+      // show admin badge
+      adminBadgeSpot.innerHTML = '<span class="admin-badge">ADMIN</span>';
+    } else {
+      adminPanel.classList.add("hidden"); adminPanel.classList.remove("visible");
+      adminBadgeSpot.innerHTML = '';
+    }
+    // ensure leaderboard displayed
+    fetchLeaderboard();
+  } else {
+    // guest / signed out
+    accountEmail.textContent = "Not signed in";
+    adminPanel.classList.add("hidden");
+    adminBadgeSpot.innerHTML = '';
+  }
+});
 
-// ensure first view = login screen (or continue as guest)
-hideAll();
-loginScreen.classList.remove("hidden");
+/* ===========================
+   Leaderboard fetch for dashboard
+   =========================== */
+async function fetchLeaderboard(){
+  const snaps = await getDocs(query(leaderCol, orderBy("highScore","desc"), limit(20)));
+  const lb = document.getElementById("leaderboard");
+  if(!lb) return;
+  lb.innerHTML = "";
+  snaps.forEach(d=>{
+    const data = d.data();
+    const line = document.createElement("div");
+    line.className = "song";
+    line.style.display="flex";
+    line.style.justifyContent="space-between";
+    line.innerHTML = `<div style="text-align:left"><strong>${escapeHtml(data.displayName||"Anon")}</strong><div class="small-muted">Level: ${escapeHtml(data.level||'Beginner')} • Streak: ${escapeHtml(String(data.streak||0))}</div></div><div style="text-align:right">${escapeHtml(String(data.highScore||0))}</div>`;
+    lb.appendChild(line);
+  });
+}
 
-/* --------------- Utilities --------------- */
-function safeText(s){ return (s||"").toString().replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+/* ===========================
+   Quick helper: create song (admin button could call this) - available for admin UI usage
+   =========================== */
+async function createSong(song){
+  await addDoc(songsCol, song);
+}
 
-</script></body>
+/* ===========================
+   Utility: small helper to load an image robustly (not used but kept)
+   =========================== */
+function tryChordImage(chord, imgEl){
+  const cand = imgForChord(chord);
+  let i=0;
+  imgEl.onerror = function(){
+    if(i < cand.length) imgEl.src = cand[i++];
+    else imgEl.style.display='none';
+  };
+  imgEl.src = cand[0];
+}
+
+/* ===========================
+   Admin: show/hide admin panel control from account menu
+   =========================== */
+document.getElementById("show-dashboard").addEventListener("click", ()=>{
+  showPanel(dashboardPanel);
+  accountPanel.style.display='none';
+  fetchLeaderboard();
+});
+
+/* ===========================
+   Small accessibility: pressing Escape hides account panel
+   =========================== */
+document.addEventListener("keydown",(e)=>{
+  if(e.key==="Escape"){ accountPanel.style.display='none'; }
+});
+
+/* ===========================
+   Final safety/network notes logger (optional)
+   =========================== */
+console.log("Guitar Hub Trainer initialized.");
+
+</script>
+</body>
 </html>
+
+  
